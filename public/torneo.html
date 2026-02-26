@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Torneo</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <button class="volver-btn" onclick="window.location.href='/'">⬅ Volver a inicio</button>
+    <h1 id="torneoTitulo">Torneo</h1>
+
+    <h2>Añadir equipo</h2>
+    <form id="equipoForm">
+        <input type="text" id="equipoName" placeholder="Nombre del equipo" required>
+        <button type="submit">Añadir equipo</button>
+    </form>
+
+    <div id="equiposList"></div>
+
+    <h2>Añadir partido</h2>
+    <form id="partidoForm">
+        <label>Equipo A:</label>
+        <select id="teamA"></select>
+        <label>Equipo B:</label>
+        <select id="teamB"></select>
+        <label>Goles A:</label>
+        <input type="number" id="scoreA" min="0" value="0">
+        <label>Goles B:</label>
+        <input type="number" id="scoreB" min="0" value="0">
+        <button type="submit">Añadir partido</button>
+    </form>
+
+    <div id="tablaClasificacion"></div>
+
+    <script src="torneo.js"></script>
+</body>
+</html>
