@@ -15,52 +15,66 @@
         </a>
         <a class="btn-back" href="/">← Volver</a>
     </header>
-    <div class="main-container">
-        <div class="torneo-hero">
-            <h1 class="torneo-hero-name" id="torneoTitulo">Cargando...</h1>
-            <div class="torneo-hero-stats">
-                <div class="hero-stat">
-                    <span class="hero-stat-value" id="statEquipos">0</span>
-                    <span class="hero-stat-label">Equipos</span>
+
+    <div class="torneo-banner" id="torneoBanner">
+        <div class="torneo-banner-content">
+            <div class="torneo-banner-label">Torneo</div>
+            <h1 class="torneo-banner-name" id="torneoTitulo">Cargando...</h1>
+            <div class="torneo-banner-stats">
+                <div class="banner-stat">
+                    <span class="banner-stat-value" id="statEquipos">0</span>
+                    <span class="banner-stat-label">Equipos</span>
                 </div>
-                <div class="hero-stat">
-                    <span class="hero-stat-value" id="statPartidos">0</span>
-                    <span class="hero-stat-label">Partidos</span>
+                <div class="banner-stat-divider"></div>
+                <div class="banner-stat">
+                    <span class="banner-stat-value" id="statPartidos">0</span>
+                    <span class="banner-stat-label">Partidos</span>
+                </div>
+                <div class="banner-stat-divider"></div>
+                <div class="banner-stat">
+                    <span class="banner-stat-value" id="statGoles">0</span>
+                    <span class="banner-stat-label">Goles</span>
                 </div>
             </div>
         </div>
+    </div>
+
+    <div class="main-container">
         <div class="section-header"><h2>Equipos</h2></div>
-        <div class="form-row">
+        <div class="equipo-add-form">
             <input type="text" id="equipoName" placeholder="Nombre del equipo...">
-            <button class="btn-primary" id="btnEquipo">Añadir</button>
+            <button class="btn-primary" id="btnEquipo">+ Añadir Equipo</button>
         </div>
         <div id="equiposList"></div>
+
         <div class="section-header"><h2>Registrar Partido</h2></div>
-        <div class="form-grid">
-            <div class="form-field">
-                <label>Equipo Local</label>
-                <select id="teamA"></select>
+        <div class="partido-form-card">
+            <div class="partido-form-teams">
+                <div class="partido-form-team">
+                    <label>Local</label>
+                    <select id="teamA"></select>
+                </div>
+                <div class="partido-form-vs">
+                    <div class="vs-inputs">
+                        <input type="number" id="scoreA" class="score-input" min="0" value="0">
+                        <span class="vs-sep">—</span>
+                        <input type="number" id="scoreB" class="score-input" min="0" value="0">
+                    </div>
+                    <span class="vs-label">VS</span>
+                </div>
+                <div class="partido-form-team right">
+                    <label>Visitante</label>
+                    <select id="teamB"></select>
+                </div>
             </div>
-            <div class="form-field">
-                <label>Equipo Visitante</label>
-                <select id="teamB"></select>
-            </div>
-            <div class="form-field">
-                <label>Goles Local</label>
-                <input type="number" id="scoreA" class="score-input" min="0" value="0">
-            </div>
-            <div class="form-field">
-                <label>Goles Visitante</label>
-                <input type="number" id="scoreB" class="score-input" min="0" value="0">
-            </div>
+            <button class="btn-primary btn-full" id="btnPartido">Guardar Resultado</button>
         </div>
-        <div class="form-row">
-            <button class="btn-primary" id="btnPartido" style="width:100%">Guardar Resultado</button>
-        </div>
+
         <div id="tablaClasificacion"></div>
         <div id="estadisticasSection"></div>
         <div id="partidosSection"></div>
     </div>
+
     <script src="torneo.js"></script>
 </body>
 </html>
