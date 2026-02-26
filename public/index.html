@@ -12,19 +12,41 @@
             <div class="logo-icon">🏆</div>
             <span class="logo-text">Torneo<span>App</span></span>
         </a>
-        <span class="header-badge">Gestor de Torneos</span>
+        <span class="header-badge" id="userBadge"></span>
     </header>
-    <div class="main-container">
-        <div class="page-title">Tus<span class="highlight">Torneos</span></div>
-        <p class="page-subtitle">Crea y gestiona torneos deportivos fácilmente.</p>
-        <div class="section-header"><h2>Nuevo Torneo</h2></div>
-        <div class="form-row">
-            <input type="text" id="torneoName" placeholder="Nombre del torneo...">
-            <button class="btn-primary" id="btnCrear">Crear Torneo</button>
+
+    <!-- PANTALLA LOGIN -->
+    <div id="loginScreen" class="login-screen" style="display:none">
+        <div class="login-box">
+            <div class="login-icon">🏆</div>
+            <h1 class="login-title">Bienvenido a<span>TorneoApp</span></h1>
+            <p class="login-subtitle">Introduce tu nombre o código para acceder a tus torneos. Recuérdalo para entrar desde cualquier dispositivo.</p>
+            <div class="form-row">
+                <input type="text" id="loginInput" placeholder="Tu nombre o código..." maxlength="30" autocomplete="off">
+                <button class="btn-primary" id="btnLogin">Entrar</button>
+            </div>
+            <p class="login-hint">⚠️ Guarda tu código — quien lo tenga verá tus torneos</p>
         </div>
-        <div class="section-header"><h2>Mis Torneos</h2></div>
-        <div id="torneosList"></div>
     </div>
+
+    <!-- APP PRINCIPAL -->
+    <div id="appScreen" style="display:none">
+        <div class="main-container">
+            <div class="page-title">Tus<span class="highlight">Torneos</span></div>
+            <p class="page-subtitle">Crea y gestiona torneos deportivos fácilmente.</p>
+            <div class="section-header"><h2>Nuevo Torneo</h2></div>
+            <div class="form-row">
+                <input type="text" id="torneoName" placeholder="Nombre del torneo...">
+                <button class="btn-primary" id="btnCrear">Crear Torneo</button>
+            </div>
+            <div class="section-header"><h2>Mis Torneos</h2></div>
+            <div id="torneosList"></div>
+            <div style="margin-top:48px; text-align:center">
+                <button class="btn-logout" id="btnLogout">Cerrar sesión</button>
+            </div>
+        </div>
+    </div>
+
     <script src="script.js"></script>
 </body>
 </html>
