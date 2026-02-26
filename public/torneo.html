@@ -2,36 +2,63 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <title>Torneo</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Torneo — TorneoApp</title>
     <link rel="stylesheet" href="styles.css">
 </head>
 <body>
-    <button class="volver-btn" onclick="window.location.href='/'">⬅ Volver a inicio</button>
-    <h1 id="torneoTitulo">Torneo</h1>
-
-    <h2>Añadir equipo</h2>
-    <form id="equipoForm">
-        <input type="text" id="equipoName" placeholder="Nombre del equipo" required>
-        <button type="submit">Añadir equipo</button>
-    </form>
-
-    <div id="equiposList"></div>
-
-    <h2>Añadir partido</h2>
-    <form id="partidoForm">
-        <label>Equipo A:</label>
-        <select id="teamA"></select>
-        <label>Equipo B:</label>
-        <select id="teamB"></select>
-        <label>Goles A:</label>
-        <input type="number" id="scoreA" min="0" value="0">
-        <label>Goles B:</label>
-        <input type="number" id="scoreB" min="0" value="0">
-        <button type="submit">Añadir partido</button>
-    </form>
-
-    <div id="tablaClasificacion"></div>
-
+    <header class="app-header">
+        <a class="app-logo" href="/">
+            <div class="logo-icon">🏆</div>
+            <span class="logo-text">Torneo<span>App</span></span>
+        </a>
+        <a class="btn-back" href="/">← Volver</a>
+    </header>
+    <div class="main-container">
+        <div class="torneo-hero">
+            <h1 class="torneo-hero-name" id="torneoTitulo">Cargando...</h1>
+            <div class="torneo-hero-stats">
+                <div class="hero-stat">
+                    <span class="hero-stat-value" id="statEquipos">0</span>
+                    <span class="hero-stat-label">Equipos</span>
+                </div>
+                <div class="hero-stat">
+                    <span class="hero-stat-value" id="statPartidos">0</span>
+                    <span class="hero-stat-label">Partidos</span>
+                </div>
+            </div>
+        </div>
+        <div class="section-header"><h2>Equipos</h2></div>
+        <div class="form-row">
+            <input type="text" id="equipoName" placeholder="Nombre del equipo...">
+            <button class="btn-primary" id="btnEquipo">Añadir</button>
+        </div>
+        <div id="equiposList"></div>
+        <div class="section-header"><h2>Registrar Partido</h2></div>
+        <div class="form-grid">
+            <div class="form-field">
+                <label>Equipo Local</label>
+                <select id="teamA"></select>
+            </div>
+            <div class="form-field">
+                <label>Equipo Visitante</label>
+                <select id="teamB"></select>
+            </div>
+            <div class="form-field">
+                <label>Goles Local</label>
+                <input type="number" id="scoreA" class="score-input" min="0" value="0">
+            </div>
+            <div class="form-field">
+                <label>Goles Visitante</label>
+                <input type="number" id="scoreB" class="score-input" min="0" value="0">
+            </div>
+        </div>
+        <div class="form-row">
+            <button class="btn-primary" id="btnPartido" style="width:100%">Guardar Resultado</button>
+        </div>
+        <div id="tablaClasificacion"></div>
+        <div id="partidosSection"></div>
+    </div>
     <script src="torneo.js"></script>
 </body>
 </html>
