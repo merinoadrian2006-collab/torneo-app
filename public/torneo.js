@@ -1,175 +1,162 @@
-const BASE_URL = '';  // Vacío = usa el mismo dominio (funciona en local y en Railway)
+const BASE_URL = '';
 
 const params = new URLSearchParams(window.location.search);
 const torneoId = params.get('id');
 
 const titulo = document.getElementById('torneoTitulo');
-const equipoForm = document.getElementById('equipoForm');
+const statEquipos = document.getElementById('statEquipos');
+const statPartidos = document.getElementById('statPartidos');
 const equiposList = document.getElementById('equiposList');
-const partidoForm = document.getElementById('partidoForm');
 const tablaClasificacion = document.getElementById('tablaClasificacion');
+const partidosSection = document.getElementById('partidosSection');
+const btnEquipo = document.getElementById('btnEquipo');
+const btnPartido = document.getElementById('btnPartido');
 
 let torneoData = null;
 
-// Cargar torneo
 async function cargarTorneo() {
     try {
         const res = await fetch(`${BASE_URL}/api/torneos/id/${torneoId}`);
-        if (!res.ok) throw new Error('Error cargando torneo');
+        if (!res.ok) throw new Error();
         torneoData = await res.json();
-
         titulo.textContent = torneoData.name;
+        document.title = `${torneoData.name} — TorneoApp`;
+        statEquipos.textContent = torneoData.teams.length;
+        statPartidos.textContent = torneoData.matches.length;
         mostrarEquipos();
-        mostrarTabla();
         actualizarSelects();
-    } catch (error) {
-        console.error(error);
-        tablaClasificacion.innerHTML = '<p>Error cargando torneo</p>';
-    }
+        mostrarTabla();
+        mostrarPartidos();
+    } catch { titulo.textContent = 'Error cargando torneo'; }
 }
 
-// Mostrar equipos
 function mostrarEquipos() {
     if (!torneoData.teams.length) {
-        equiposList.innerHTML = '<p>No hay equipos aún</p>';
+        equiposList.innerHTML = '<div class="empty-state" style="padding:24px"><p>No hay equipos aún</p></div>';
         return;
     }
-
     equiposList.innerHTML = torneoData.teams.map(t => `
         <div class="equipo-item">
-            ${t.name}
-            <button class="small-btn" onclick="eliminarEquipo('${t._id}')">Eliminar</button>
+            <span class="equipo-item-name">${t.name}</span>
+            <button class="btn-danger" onclick="eliminarEquipo('${t._id}')">Eliminar</button>
         </div>
     `).join('');
 }
 
-// Eliminar equipo
-async function eliminarEquipo(equipoId) {
-    if (!confirm('¿Seguro que quieres eliminar este equipo?')) return;
+async function eliminarEquipo(id) {
+    if (!confirm('¿Eliminar este equipo?')) return;
     try {
-        const res = await fetch(`${BASE_URL}/api/torneos/${torneoId}/equipos/${equipoId}`, { method: 'DELETE' });
-        if (!res.ok) throw new Error('Error eliminando equipo');
+        const res = await fetch(`${BASE_URL}/api/torneos/${torneoId}/equipos/${id}`, { method: 'DELETE' });
+        if (!res.ok) throw new Error();
         cargarTorneo();
-    } catch (error) {
-        console.error(error);
-        alert('Error eliminando equipo');
-    }
+    } catch { alert('Error eliminando equipo'); }
 }
 
-// Añadir equipo
-equipoForm.addEventListener('submit', async e => {
-    e.preventDefault();
+btnEquipo.addEventListener('click', async () => {
     const nameInput = document.getElementById('equipoName');
     const name = nameInput.value.trim();
-    if (!name) return alert('Escribe un nombre válido');
-
+    if (!name) return;
+    btnEquipo.disabled = true;
     try {
         const res = await fetch(`${BASE_URL}/api/torneos/${torneoId}/equipos`, {
             method: 'PUT',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ name })
         });
-        if (!res.ok) throw new Error('Error añadiendo equipo');
-
+        if (!res.ok) throw new Error();
         nameInput.value = '';
         cargarTorneo();
-    } catch (error) {
-        console.error(error);
-        alert('Error añadiendo equipo');
-    }
+    } catch { alert('Error añadiendo equipo'); }
+    finally { btnEquipo.disabled = false; }
 });
 
-// Añadir partido
-partidoForm.addEventListener('submit', async e => {
-    e.preventDefault();
+document.getElementById('equipoName').addEventListener('keydown', e => { if (e.key === 'Enter') btnEquipo.click(); });
+
+btnPartido.addEventListener('click', async () => {
     const teamA = document.getElementById('teamA').value;
     const teamB = document.getElementById('teamB').value;
-    const scoreA = parseInt(document.getElementById('scoreA').value);
-    const scoreB = parseInt(document.getElementById('scoreB').value);
-
+    const scoreA = parseInt(document.getElementById('scoreA').value) || 0;
+    const scoreB = parseInt(document.getElementById('scoreB').value) || 0;
     if (teamA === teamB) return alert('Elige equipos diferentes');
-
+    btnPartido.disabled = true;
     try {
         const res = await fetch(`${BASE_URL}/api/torneos/${torneoId}/partidos`, {
             method: 'PUT',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ teamA, teamB, scoreA, scoreB })
         });
-        if (!res.ok) throw new Error('Error añadiendo partido');
-
+        if (!res.ok) throw new Error();
         document.getElementById('scoreA').value = 0;
         document.getElementById('scoreB').value = 0;
         cargarTorneo();
-    } catch (error) {
-        console.error(error);
-        alert('Error añadiendo partido');
-    }
+    } catch { alert('Error añadiendo partido'); }
+    finally { btnPartido.disabled = false; }
 });
 
-// Actualizar selects de equipos para partidos
 function actualizarSelects() {
-    const teamASelect = document.getElementById('teamA');
-    const teamBSelect = document.getElementById('teamB');
-    if (torneoData.teams.length === 0) {
-        teamASelect.innerHTML = teamBSelect.innerHTML = '';
-        return;
-    }
-    teamASelect.innerHTML = torneoData.teams.map(t => `<option value="${t.name}">${t.name}</option>`).join('');
-    teamBSelect.innerHTML = torneoData.teams.map(t => `<option value="${t.name}">${t.name}</option>`).join('');
+    const a = document.getElementById('teamA');
+    const b = document.getElementById('teamB');
+    const opts = torneoData.teams.map(t => `<option value="${t.name}">${t.name}</option>`).join('');
+    a.innerHTML = opts;
+    b.innerHTML = opts;
+    if (torneoData.teams.length > 1) b.selectedIndex = 1;
 }
 
-// Mostrar tabla y partidos
 function mostrarTabla() {
-    if (!torneoData.teams.length) {
-        tablaClasificacion.innerHTML = '';
-        return;
-    }
-
-    const equiposOrdenados = [...torneoData.teams].sort((a, b) =>
+    if (!torneoData.teams.length) { tablaClasificacion.innerHTML = ''; return; }
+    const equipos = [...torneoData.teams].sort((a, b) =>
         b.points - a.points || (b.goalsFor - b.goalsAgainst) - (a.goalsFor - a.goalsAgainst)
     );
-
-    let html = "<h3>Tabla de Clasificación</h3>";
-    html += "<table><tr><th>Equipo</th><th>Pts</th><th>GF</th><th>GC</th><th>PG</th><th>PE</th><th>PP</th></tr>";
-
-    equiposOrdenados.forEach(t => {
-        html += `<tr>
-            <td>${t.name}</td>
-            <td>${t.points}</td>
-            <td>${t.goalsFor}</td>
-            <td>${t.goalsAgainst}</td>
-            <td>${t.wins}</td>
-            <td>${t.draws}</td>
-            <td>${t.losses}</td>
+    const filas = equipos.map((t, i) => {
+        const rankClass = i === 0 ? 'rank-1' : i === 1 ? 'rank-2' : i === 2 ? 'rank-3' : '';
+        return `<tr>
+            <td><span class="rank-num ${rankClass}">${i + 1}</span>${t.name}</td>
+            <td class="pts-cell">${t.points}</td>
+            <td>${t.wins + t.draws + t.losses}</td>
+            <td>${t.wins}</td><td>${t.draws}</td><td>${t.losses}</td>
+            <td>${t.goalsFor}</td><td>${t.goalsAgainst}</td>
+            <td>${t.goalsFor - t.goalsAgainst > 0 ? '+' : ''}${t.goalsFor - t.goalsAgainst}</td>
         </tr>`;
-    });
-    html += "</table>";
+    }).join('');
+    tablaClasificacion.innerHTML = `
+        <div class="section-header" style="margin-top:48px"><h2>Clasificación</h2></div>
+        <div class="tabla-wrapper">
+            <div class="tabla-title">Tabla General</div>
+            <table>
+                <thead><tr>
+                    <th>Equipo</th><th>Pts</th><th>PJ</th>
+                    <th>PG</th><th>PE</th><th>PP</th>
+                    <th>GF</th><th>GC</th><th>DG</th>
+                </tr></thead>
+                <tbody>${filas}</tbody>
+            </table>
+        </div>`;
+}
 
-    if (torneoData.matches.length) {
-        html += "<h3>Partidos</h3>";
-        html += torneoData.matches.map(m => `
-            <div class="partido-item">
-                <span>${m.teamA} ${m.scoreA} - ${m.scoreB} ${m.teamB}</span>
-                <button class="small-btn" onclick="eliminarPartido('${m._id}')">Eliminar</button>
+function mostrarPartidos() {
+    if (!torneoData.matches.length) { partidosSection.innerHTML = ''; return; }
+    const items = [...torneoData.matches].reverse().map(m => `
+        <div class="partido-item">
+            <div class="partido-teams">
+                <span class="partido-team">${m.teamA}</span>
+                <span class="partido-score">${m.scoreA} — ${m.scoreB}</span>
+                <span class="partido-team away">${m.teamB}</span>
             </div>
-        `).join('');
-    }
-
-    tablaClasificacion.innerHTML = html;
+            <button class="btn-danger" onclick="eliminarPartido('${m._id}')">✕</button>
+        </div>
+    `).join('');
+    partidosSection.innerHTML = `
+        <div class="section-header" style="margin-top:48px"><h2>Partidos</h2></div>
+        <div class="partidos-list">${items}</div>`;
 }
 
-// Eliminar partido
-async function eliminarPartido(matchId) {
-    if (!confirm('¿Seguro que quieres eliminar este partido?')) return;
+async function eliminarPartido(id) {
+    if (!confirm('¿Eliminar este partido?')) return;
     try {
-        const res = await fetch(`${BASE_URL}/api/torneos/${torneoId}/partidos/${matchId}`, { method: 'DELETE' });
-        if (!res.ok) throw new Error('Error eliminando partido');
+        const res = await fetch(`${BASE_URL}/api/torneos/${torneoId}/partidos/${id}`, { method: 'DELETE' });
+        if (!res.ok) throw new Error();
         cargarTorneo();
-    } catch (error) {
-        console.error(error);
-        alert('Error eliminando partido');
-    }
+    } catch { alert('Error eliminando partido'); }
 }
 
-// Inicializar
 cargarTorneo();
