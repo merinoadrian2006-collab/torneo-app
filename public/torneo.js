@@ -14,6 +14,17 @@ const btnPartido = document.getElementById('btnPartido');
 
 let torneoData = null;
 
+function animateCount(el, target, duration = 600) {
+    const startTime = performance.now();
+    function update(now) {
+        const progress = Math.min((now - startTime) / duration, 1);
+        const ease = 1 - Math.pow(1 - progress, 3);
+        el.textContent = Math.round(target * ease);
+        if (progress < 1) requestAnimationFrame(update);
+    }
+    requestAnimationFrame(update);
+}
+
 async function cargarTorneo() {
     try {
         const res = await fetch(`${BASE_URL}/api/torneos/id/${torneoId}`);
@@ -21,13 +32,15 @@ async function cargarTorneo() {
         torneoData = await res.json();
         titulo.textContent = torneoData.name;
         document.title = `${torneoData.name} — TorneoApp`;
-        statEquipos.textContent = torneoData.teams.length;
-        statPartidos.textContent = torneoData.matches.length;
+        animateCount(statEquipos, torneoData.teams.length);
+        animateCount(statPartidos, torneoData.matches.length);
         mostrarEquipos();
         actualizarSelects();
         mostrarTabla();
         mostrarPartidos();
-    } catch { titulo.textContent = 'Error cargando torneo'; }
+    } catch {
+        titulo.textContent = 'Error cargando torneo';
+    }
 }
 
 function mostrarEquipos() {
@@ -65,6 +78,9 @@ btnEquipo.addEventListener('click', async () => {
         });
         if (!res.ok) throw new Error();
         nameInput.value = '';
+        btnEquipo.textContent = '✓';
+        btnEquipo.style.background = '#00ff88';
+        setTimeout(() => { btnEquipo.style.background = ''; btnEquipo.textContent = 'Añadir'; }, 700);
         cargarTorneo();
     } catch { alert('Error añadiendo equipo'); }
     finally { btnEquipo.disabled = false; }
@@ -79,6 +95,7 @@ btnPartido.addEventListener('click', async () => {
     const scoreB = parseInt(document.getElementById('scoreB').value) || 0;
     if (teamA === teamB) return alert('Elige equipos diferentes');
     btnPartido.disabled = true;
+    btnPartido.textContent = '...';
     try {
         const res = await fetch(`${BASE_URL}/api/torneos/${torneoId}/partidos`, {
             method: 'PUT',
@@ -88,6 +105,9 @@ btnPartido.addEventListener('click', async () => {
         if (!res.ok) throw new Error();
         document.getElementById('scoreA').value = 0;
         document.getElementById('scoreB').value = 0;
+        btnPartido.textContent = '✓ Guardado';
+        btnPartido.style.background = '#00ff88';
+        setTimeout(() => { btnPartido.style.background = ''; btnPartido.textContent = 'Guardar Resultado'; }, 800);
         cargarTorneo();
     } catch { alert('Error añadiendo partido'); }
     finally { btnPartido.disabled = false; }
