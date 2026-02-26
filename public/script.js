@@ -1,10 +1,46 @@
 const BASE_URL = '';
 
-let sessionId = localStorage.getItem('sessionId');
-if (!sessionId) {
-    sessionId = 'user_' + Date.now();
-    localStorage.setItem('sessionId', sessionId);
+let sessionId = localStorage.getItem('torneoapp_session');
+
+const loginScreen = document.getElementById('loginScreen');
+const appScreen = document.getElementById('appScreen');
+const userBadge = document.getElementById('userBadge');
+const loginInput = document.getElementById('loginInput');
+const btnLogin = document.getElementById('btnLogin');
+const btnLogout = document.getElementById('btnLogout');
+
+function mostrarLogin() {
+    loginScreen.style.display = 'flex';
+    appScreen.style.display = 'none';
+    userBadge.textContent = '';
 }
+
+function mostrarApp() {
+    loginScreen.style.display = 'none';
+    appScreen.style.display = 'block';
+    userBadge.textContent = '👤 ' + sessionId;
+    cargarTorneos();
+}
+
+if (sessionId) { mostrarApp(); } else { mostrarLogin(); }
+
+btnLogin.addEventListener('click', () => {
+    const val = loginInput.value.trim().toLowerCase().replace(/\s+/g, '_');
+    if (!val) return;
+    sessionId = val;
+    localStorage.setItem('torneoapp_session', sessionId);
+    mostrarApp();
+});
+
+loginInput.addEventListener('keydown', e => { if (e.key === 'Enter') btnLogin.click(); });
+
+btnLogout.addEventListener('click', () => {
+    if (!confirm('¿Cerrar sesión? Podrás volver a entrar con tu código.')) return;
+    localStorage.removeItem('torneoapp_session');
+    sessionId = null;
+    mostrarLogin();
+    loginInput.value = '';
+});
 
 const torneosList = document.getElementById('torneosList');
 const torneoNameInput = document.getElementById('torneoName');
@@ -63,5 +99,3 @@ async function eliminarTorneo(e, id, name) {
         cargarTorneos();
     } catch { alert('Error eliminando torneo'); }
 }
-
-cargarTorneos();
