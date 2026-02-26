@@ -8,11 +8,14 @@ const statEquipos = document.getElementById('statEquipos');
 const statPartidos = document.getElementById('statPartidos');
 const equiposList = document.getElementById('equiposList');
 const tablaClasificacion = document.getElementById('tablaClasificacion');
+const estadisticasSection = document.getElementById('estadisticasSection');
 const partidosSection = document.getElementById('partidosSection');
 const btnEquipo = document.getElementById('btnEquipo');
 const btnPartido = document.getElementById('btnPartido');
 
 let torneoData = null;
+let chartBars = null;
+let chartPie = null;
 
 function animateCount(el, target, duration = 600) {
     const startTime = performance.now();
@@ -37,6 +40,7 @@ async function cargarTorneo() {
         mostrarEquipos();
         actualizarSelects();
         mostrarTabla();
+        mostrarEstadisticas();
         mostrarPartidos();
     } catch {
         titulo.textContent = 'Error cargando torneo';
@@ -151,6 +155,98 @@ function mostrarTabla() {
                 <tbody>${filas}</tbody>
             </table>
         </div>`;
+}
+
+function mostrarEstadisticas() {
+    if (!torneoData.teams.length || !torneoData.matches.length) {
+        estadisticasSection.innerHTML = '';
+        return;
+    }
+    const equipos = [...torneoData.teams].sort((a, b) =>
+        b.points - a.points || (b.goalsFor - b.goalsAgainst) - (a.goalsFor - a.goalsAgainst)
+    );
+    const rachaHTML = equipos.map(t => {
+        const partidos = torneoData.matches.filter(m => m.teamA === t.name || m.teamB === t.name).slice(-5);
+        const iconos = partidos.map(m => {
+            const esA = m.teamA === t.name;
+            const gF = esA ? m.scoreA : m.scoreB;
+            const gC = esA ? m.scoreB : m.scoreA;
+            if (gF > gC) return '<span class="racha-w">V</span>';
+            if (gF < gC) return '<span class="racha-l">D</span>';
+            return '<span class="racha-d">E</span>';
+        }).join('');
+        return `
+            <div class="racha-item">
+                <span class="racha-nombre">${t.name}</span>
+                <div class="racha-iconos">${iconos || '<span style="color:var(--text-muted);font-size:12px">Sin partidos</span>'}</div>
+            </div>`;
+    }).join('');
+
+    estadisticasSection.innerHTML = `
+        <div class="section-header" style="margin-top:48px"><h2>Estadísticas</h2></div>
+        <div class="stats-grid">
+            <div class="chart-card">
+                <div class="chart-title">Goles por Equipo</div>
+                <canvas id="chartBars" height="220"></canvas>
+            </div>
+            <div class="chart-card">
+                <div class="chart-title">Resultados Globales</div>
+                <canvas id="chartPie" height="220"></canvas>
+            </div>
+        </div>
+        <div class="chart-card" style="margin-top:12px">
+            <div class="chart-title">Racha — Últimos 5 partidos</div>
+            <div class="racha-list">${rachaHTML}</div>
+        </div>`;
+
+    if (chartBars) { chartBars.destroy(); chartBars = null; }
+    if (chartPie) { chartPie.destroy(); chartPie = null; }
+
+    const nombres = equipos.map(t => t.name);
+    const gf = equipos.map(t => t.goalsFor);
+    const gc = equipos.map(t => t.goalsAgainst);
+
+    chartBars = new Chart(document.getElementById('chartBars').getContext('2d'), {
+        type: 'bar',
+        data: {
+            labels: nombres,
+            datasets: [
+                { label: 'Goles a favor', data: gf, backgroundColor: 'rgba(232,255,0,0.8)', borderRadius: 6, borderSkipped: false },
+                { label: 'Goles en contra', data: gc, backgroundColor: 'rgba(255,59,59,0.6)', borderRadius: 6, borderSkipped: false }
+            ]
+        },
+        options: {
+            responsive: true,
+            animation: { duration: 800, easing: 'easeOutQuart' },
+            plugins: { legend: { labels: { color: '#888899', font: { family: 'Barlow', size: 12 } } } },
+            scales: {
+                x: { ticks: { color: '#888899', font: { family: 'Barlow' } }, grid: { color: 'rgba(255,255,255,0.05)' } },
+                y: { ticks: { color: '#888899', font: { family: 'Barlow' } }, grid: { color: 'rgba(255,255,255,0.05)' }, beginAtZero: true }
+            }
+        }
+    });
+
+    const totalV = torneoData.teams.reduce((s, t) => s + t.wins, 0);
+    const totalE = torneoData.teams.reduce((s, t) => s + t.draws, 0);
+    const totalD = torneoData.teams.reduce((s, t) => s + t.losses, 0);
+
+    chartPie = new Chart(document.getElementById('chartPie').getContext('2d'), {
+        type: 'doughnut',
+        data: {
+            labels: ['Victorias', 'Empates', 'Derrotas'],
+            datasets: [{
+                data: [totalV, totalE, totalD],
+                backgroundColor: ['rgba(232,255,0,0.85)', 'rgba(100,120,255,0.7)', 'rgba(255,59,59,0.7)'],
+                borderColor: '#0a0a0f', borderWidth: 3, hoverOffset: 8
+            }]
+        },
+        options: {
+            responsive: true,
+            animation: { duration: 800, easing: 'easeOutQuart' },
+            cutout: '60%',
+            plugins: { legend: { position: 'bottom', labels: { color: '#888899', font: { family: 'Barlow', size: 12 }, padding: 16 } } }
+        }
+    });
 }
 
 function mostrarPartidos() {
