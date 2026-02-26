@@ -1,4 +1,4 @@
-const BASE_URL = '';  // Vacío = usa el mismo dominio (funciona en local y en Railway)
+const BASE_URL = '';
 
 let sessionId = localStorage.getItem('sessionId');
 if (!sessionId) {
@@ -6,82 +6,62 @@ if (!sessionId) {
     localStorage.setItem('sessionId', sessionId);
 }
 
-const form = document.getElementById('torneoForm');
 const torneosList = document.getElementById('torneosList');
+const torneoNameInput = document.getElementById('torneoName');
+const btnCrear = document.getElementById('btnCrear');
 
-// Crear torneo
-form.addEventListener('submit', async (e) => {
-    e.preventDefault();
-    const nameInput = document.getElementById('torneoName');
-    const name = nameInput.value.trim();
-    if (!name) return alert('Escribe un nombre válido');
-
+btnCrear.addEventListener('click', async () => {
+    const name = torneoNameInput.value.trim();
+    if (!name) return;
+    btnCrear.textContent = '...';
+    btnCrear.disabled = true;
     try {
         const res = await fetch(`${BASE_URL}/api/torneos`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ name, sessionId })
         });
-
-        if (!res.ok) throw new Error('Error creando torneo');
-
-        nameInput.value = '';
+        if (!res.ok) throw new Error();
+        torneoNameInput.value = '';
         cargarTorneos();
-    } catch (error) {
-        console.error(error);
-        alert('Error creando torneo');
-    }
+    } catch { alert('Error creando torneo'); }
+    finally { btnCrear.textContent = 'Crear Torneo'; btnCrear.disabled = false; }
 });
 
-// Cargar torneos
+torneoNameInput.addEventListener('keydown', e => { if (e.key === 'Enter') btnCrear.click(); });
+
 async function cargarTorneos() {
+    torneosList.innerHTML = '<div class="empty-state"><span class="empty-icon">⏳</span><p>Cargando...</p></div>';
     try {
         const res = await fetch(`${BASE_URL}/api/torneos/${sessionId}`);
-        if (!res.ok) throw new Error('Error cargando torneos');
+        if (!res.ok) throw new Error();
         const torneos = await res.json();
-
-        torneosList.innerHTML = '';
-
         if (torneos.length === 0) {
-            torneosList.innerHTML = '<p>No tienes torneos aún</p>';
+            torneosList.innerHTML = '<div class="empty-state"><span class="empty-icon">🏟️</span><p>No tienes torneos aún. ¡Crea el primero!</p></div>';
             return;
         }
-
-        torneos.forEach(t => {
-            const div = document.createElement('div');
-            div.classList.add('torneo-card');
-
-            const nombre = document.createElement('span');
-            nombre.textContent = t.name;
-            nombre.style.cursor = 'pointer';
-            nombre.onclick = () => window.location.href = `torneo.html?id=${t._id}`;
-            div.appendChild(nombre);
-
-            const btnEliminar = document.createElement('button');
-            btnEliminar.textContent = 'Eliminar';
-            btnEliminar.classList.add('small-btn');
-            btnEliminar.onclick = async (e) => {
-                e.stopPropagation();
-                if (confirm(`¿Seguro que quieres borrar "${t.name}"?`)) {
-                    try {
-                        const delRes = await fetch(`${BASE_URL}/api/torneos/${t._id}`, { method: 'DELETE' });
-                        if (!delRes.ok) throw new Error('Error eliminando torneo');
-                        cargarTorneos();
-                    } catch (err) {
-                        console.error(err);
-                        alert('Error eliminando torneo');
-                    }
-                }
-            };
-            div.appendChild(btnEliminar);
-
-            torneosList.appendChild(div);
-        });
-    } catch (error) {
-        console.error(error);
-        torneosList.innerHTML = '<p>Error cargando torneos</p>';
-    }
+        torneosList.innerHTML = torneos.map(t => `
+            <div class="torneo-card" onclick="window.location.href='torneo.html?id=${t._id}'">
+                <div class="torneo-card-info">
+                    <div class="torneo-card-name">${t.name}</div>
+                    <div class="torneo-card-meta">${t.teams.length} equipos · ${t.matches.length} partidos</div>
+                </div>
+                <div class="torneo-card-actions">
+                    <button class="btn-danger" onclick="eliminarTorneo(event, '${t._id}', '${t.name}')">Eliminar</button>
+                    <span class="torneo-card-arrow">›</span>
+                </div>
+            </div>
+        `).join('');
+    } catch { torneosList.innerHTML = '<div class="empty-state"><p>Error cargando torneos</p></div>'; }
 }
 
-// Inicializar
+async function eliminarTorneo(e, id, name) {
+    e.stopPropagation();
+    if (!confirm(`¿Eliminar "${name}"?`)) return;
+    try {
+        await fetch(`${BASE_URL}/api/torneos/${id}`, { method: 'DELETE' });
+        cargarTorneos();
+    } catch { alert('Error eliminando torneo'); }
+}
+
 cargarTorneos();
