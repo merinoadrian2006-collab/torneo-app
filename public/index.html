@@ -2,20 +2,29 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <title>App de Torneos</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TorneoApp — Gestión de Torneos</title>
     <link rel="stylesheet" href="styles.css">
 </head>
 <body>
-    <h1>Crear un nuevo torneo</h1>
-
-    <form id="torneoForm">
-        <input type="text" id="torneoName" placeholder="Nombre del torneo" required>
-        <button type="submit">Crear Torneo</button>
-    </form>
-
-    <h2>Mis torneos</h2>
-    <div id="torneosList"></div>
-
+    <header class="app-header">
+        <a class="app-logo" href="/">
+            <div class="logo-icon">🏆</div>
+            <span class="logo-text">Torneo<span>App</span></span>
+        </a>
+        <span class="header-badge">Gestor de Torneos</span>
+    </header>
+    <div class="main-container">
+        <div class="page-title">Tus<span class="highlight">Torneos</span></div>
+        <p class="page-subtitle">Crea y gestiona torneos deportivos fácilmente.</p>
+        <div class="section-header"><h2>Nuevo Torneo</h2></div>
+        <div class="form-row">
+            <input type="text" id="torneoName" placeholder="Nombre del torneo...">
+            <button class="btn-primary" id="btnCrear">Crear Torneo</button>
+        </div>
+        <div class="section-header"><h2>Mis Torneos</h2></div>
+        <div id="torneosList"></div>
+    </div>
     <script src="script.js"></script>
 </body>
 </html>
