@@ -27,9 +27,15 @@ if (sessionId) { mostrarApp(); } else { mostrarLogin(); }
 btnLogin.addEventListener('click', () => {
     const val = loginInput.value.trim().toLowerCase().replace(/\s+/g, '_');
     if (!val) return;
-    sessionId = val;
-    localStorage.setItem('torneoapp_session', sessionId);
-    mostrarApp();
+    btnLogin.textContent = '✓';
+    btnLogin.style.background = '#00ff88';
+    setTimeout(() => {
+        sessionId = val;
+        localStorage.setItem('torneoapp_session', sessionId);
+        mostrarApp();
+        btnLogin.textContent = 'Entrar';
+        btnLogin.style.background = '';
+    }, 400);
 });
 
 loginInput.addEventListener('keydown', e => { if (e.key === 'Enter') btnLogin.click(); });
@@ -59,9 +65,21 @@ btnCrear.addEventListener('click', async () => {
         });
         if (!res.ok) throw new Error();
         torneoNameInput.value = '';
+        btnCrear.textContent = '✓ Creado';
+        btnCrear.style.background = '#00ff88';
+        btnCrear.classList.add('flash');
+        setTimeout(() => {
+            btnCrear.style.background = '';
+            btnCrear.classList.remove('flash');
+            btnCrear.textContent = 'Crear Torneo';
+        }, 800);
         cargarTorneos();
-    } catch { alert('Error creando torneo'); }
-    finally { btnCrear.textContent = 'Crear Torneo'; btnCrear.disabled = false; }
+    } catch {
+        alert('Error creando torneo');
+        btnCrear.textContent = 'Crear Torneo';
+    } finally {
+        btnCrear.disabled = false;
+    }
 });
 
 torneoNameInput.addEventListener('keydown', e => { if (e.key === 'Enter') btnCrear.click(); });
@@ -88,7 +106,9 @@ async function cargarTorneos() {
                 </div>
             </div>
         `).join('');
-    } catch { torneosList.innerHTML = '<div class="empty-state"><p>Error cargando torneos</p></div>'; }
+    } catch {
+        torneosList.innerHTML = '<div class="empty-state"><p>Error cargando torneos</p></div>';
+    }
 }
 
 async function eliminarTorneo(e, id, name) {
@@ -99,3 +119,5 @@ async function eliminarTorneo(e, id, name) {
         cargarTorneos();
     } catch { alert('Error eliminando torneo'); }
 }
+
+cargarTorneos();
