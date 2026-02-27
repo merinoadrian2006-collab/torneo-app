@@ -31,9 +31,12 @@ const ActivitySchema = new mongoose.Schema({
   date: { type: Date, default: Date.now }
 });
 
+const VALID_SPORTS = ['futbol', 'futbol_sala', 'baloncesto', 'tenis', 'frontenis', 'voleibol', 'padel', 'rugby'];
+
 const TorneoSchema = new mongoose.Schema({
   name: String,
-  sessionId: String,
+  sessionId: { type: String, index: true },
+  sport: { type: String, default: 'futbol', enum: VALID_SPORTS },
   teams: [TeamSchema],
   matches: [MatchSchema],
   playoff: [PlayoffMatchSchema],
