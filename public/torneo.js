@@ -1,7 +1,7 @@
 const BASE_URL = '';
-
 const params = new URLSearchParams(window.location.search);
 const torneoId = params.get('id');
+const isPublic = params.get('public') === '1';
 
 const titulo = document.getElementById('torneoTitulo');
 const statEquipos = document.getElementById('statEquipos');
@@ -11,23 +11,23 @@ const equiposList = document.getElementById('equiposList');
 const tablaClasificacion = document.getElementById('tablaClasificacion');
 const estadisticasSection = document.getElementById('estadisticasSection');
 const partidosSection = document.getElementById('partidosSection');
+const playoffSection = document.getElementById('playoffSection');
+const activitySection = document.getElementById('activitySection');
 const btnEquipo = document.getElementById('btnEquipo');
 const btnPartido = document.getElementById('btnPartido');
 const banner = document.getElementById('torneoBanner');
+const shareBar = document.getElementById('shareBar');
+const editControls = document.getElementById('editControls');
+const editControls2 = document.getElementById('editControls2');
 
 let torneoData = null;
 let chartBars = null;
 let chartPie = null;
 
 const BANNER_COLORS = [
-    ['#1a0533', '#6b21a8'],
-    ['#0a1628', '#1e40af'],
-    ['#0d2818', '#15803d'],
-    ['#2d1000', '#c2410c'],
-    ['#1a0a00', '#b45309'],
-    ['#1a0022', '#9333ea'],
-    ['#001a1a', '#0f766e'],
-    ['#1a0010', '#be185d'],
+    ['#1a0533','#6b21a8'],['#0a1628','#1e40af'],['#0d2818','#15803d'],
+    ['#2d1000','#c2410c'],['#1a0a00','#b45309'],['#1a0022','#9333ea'],
+    ['#001a1a','#0f766e'],['#1a0010','#be185d'],
 ];
 
 function getBannerColor(name) {
@@ -40,27 +40,29 @@ function animateCount(el, target, duration = 700) {
     const startTime = performance.now();
     function update(now) {
         const progress = Math.min((now - startTime) / duration, 1);
-        const ease = 1 - Math.pow(1 - progress, 3);
-        el.textContent = Math.round(target * ease);
+        el.textContent = Math.round(target * (1 - Math.pow(1 - progress, 3)));
         if (progress < 1) requestAnimationFrame(update);
     }
     requestAnimationFrame(update);
 }
 
 function getInitials(name) {
-    return name.split(' ').map(w => w[0]).join('').toUpperCase().slice(0, 2);
+    return (name || '?').split(' ').map(w => w[0]).join('').toUpperCase().slice(0, 2);
 }
 
 function getAvatarColor(name) {
     const colors = ['#e8ff00','#ff6b35','#a78bfa','#34d399','#60a5fa','#f472b6','#fbbf24','#f87171'];
     let hash = 0;
-    for (let i = 0; i < name.length; i++) hash = name.charCodeAt(i) + ((hash << 5) - hash);
+    for (let i = 0; i < (name||'').length; i++) hash = name.charCodeAt(i) + ((hash << 5) - hash);
     return colors[Math.abs(hash) % colors.length];
 }
 
 async function cargarTorneo() {
     try {
-        const res = await fetch(`${BASE_URL}/api/torneos/id/${torneoId}`);
+        const url = isPublic
+            ? `${BASE_URL}/api/public/${torneoId}`
+            : `${BASE_URL}/api/torneos/id/${torneoId}`;
+        const res = await fetch(url);
         if (!res.ok) throw new Error();
         torneoData = await res.json();
 
@@ -76,14 +78,61 @@ async function cargarTorneo() {
         animateCount(statPartidos, torneoData.matches.length);
         animateCount(statGoles, totalGoles);
 
+        if (isPublic) {
+            if (editControls) editControls.style.display = 'none';
+            if (editControls2) editControls2.style.display = 'none';
+            if (shareBar) shareBar.style.display = 'none';
+        } else {
+            mostrarShareBar();
+        }
+
         mostrarEquipos();
-        actualizarSelects();
+        if (!isPublic) actualizarSelects();
         mostrarTabla();
         mostrarEstadisticas();
+        mostrarPlayoff();
         mostrarPartidos();
+        mostrarActividad();
     } catch {
-        titulo.textContent = 'Error cargando torneo';
+        titulo.textContent = 'Torneo no disponible';
     }
+}
+
+function mostrarShareBar() {
+    if (!shareBar) return;
+    const url = `${window.location.origin}/torneo.html?id=${torneoId}&public=1`;
+    shareBar.innerHTML = `
+        <div class="share-bar-inner">
+            <div class="share-info">
+                <span class="share-label">Enlace público</span>
+                <span class="share-status ${torneoData.publicShare ? 'active' : ''}">${torneoData.publicShare ? '🟢 Activo' : '⚫ Desactivado'}</span>
+            </div>
+            <div class="share-actions">
+                <input class="share-url" value="${url}" readonly id="shareUrlInput">
+                <button class="btn-share-copy" onclick="copiarEnlace()" id="btnCopy">Copiar enlace</button>
+                <button class="btn-share-toggle ${torneoData.publicShare ? 'active' : ''}" onclick="toggleShare()">${torneoData.publicShare ? 'Desactivar' : 'Activar'}</button>
+            </div>
+        </div>`;
+}
+
+async function toggleShare() {
+    try {
+        const res = await fetch(`${BASE_URL}/api/torneos/${torneoId}/share`, { method: 'PUT' });
+        const data = await res.json();
+        torneoData.publicShare = data.publicShare;
+        mostrarShareBar();
+    } catch { alert('Error'); }
+}
+
+function copiarEnlace() {
+    const input = document.getElementById('shareUrlInput');
+    navigator.clipboard.writeText(input.value).then(() => {
+        const btn = document.getElementById('btnCopy');
+        btn.textContent = '✓ Copiado';
+        btn.style.background = '#00ff88';
+        btn.style.color = '#0a0a0f';
+        setTimeout(() => { btn.textContent = 'Copiar enlace'; btn.style.background = ''; btn.style.color = ''; }, 1500);
+    });
 }
 
 function mostrarEquipos() {
@@ -93,16 +142,15 @@ function mostrarEquipos() {
     }
     equiposList.innerHTML = `<div class="equipos-grid">${torneoData.teams.map(t => {
         const color = getAvatarColor(t.name);
-        const initials = getInitials(t.name);
         const pj = t.wins + t.draws + t.losses;
         return `
         <div class="equipo-card">
-            <div class="equipo-avatar" style="background:${color}22; border-color:${color}44; color:${color}">${initials}</div>
+            <div class="equipo-avatar" style="background:${color}22;border-color:${color}44;color:${color}">${getInitials(t.name)}</div>
             <div class="equipo-card-info">
                 <span class="equipo-card-name">${t.name}</span>
                 <span class="equipo-card-stats">${pj} PJ · ${t.points} pts</span>
             </div>
-            <button class="btn-danger" onclick="eliminarEquipo('${t._id}')">✕</button>
+            ${!isPublic ? `<button class="btn-danger" onclick="eliminarEquipo('${t._id}')">✕</button>` : ''}
         </div>`;
     }).join('')}</div>`;
 }
@@ -112,63 +160,57 @@ async function eliminarEquipo(id) {
     try {
         await fetch(`${BASE_URL}/api/torneos/${torneoId}/equipos/${id}`, { method: 'DELETE' });
         cargarTorneo();
-    } catch { alert('Error eliminando equipo'); }
+    } catch { alert('Error'); }
 }
 
-btnEquipo.addEventListener('click', async () => {
+if (btnEquipo) btnEquipo.addEventListener('click', async () => {
     const nameInput = document.getElementById('equipoName');
     const name = nameInput.value.trim();
     if (!name) return;
     btnEquipo.disabled = true;
     try {
-        const res = await fetch(`${BASE_URL}/api/torneos/${torneoId}/equipos`, {
-            method: 'PUT',
-            headers: { 'Content-Type': 'application/json' },
+        await fetch(`${BASE_URL}/api/torneos/${torneoId}/equipos`, {
+            method: 'PUT', headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ name })
         });
-        if (!res.ok) throw new Error();
         nameInput.value = '';
-        btnEquipo.textContent = '✓ Añadido';
-        btnEquipo.style.background = '#00ff88';
+        btnEquipo.textContent = '✓ Añadido'; btnEquipo.style.background = '#00ff88';
         setTimeout(() => { btnEquipo.style.background = ''; btnEquipo.textContent = '+ Añadir Equipo'; }, 700);
         cargarTorneo();
-    } catch { alert('Error añadiendo equipo'); }
+    } catch { alert('Error'); }
     finally { btnEquipo.disabled = false; }
 });
 
-document.getElementById('equipoName').addEventListener('keydown', e => { if (e.key === 'Enter') btnEquipo.click(); });
+const equipoNameInput = document.getElementById('equipoName');
+if (equipoNameInput) equipoNameInput.addEventListener('keydown', e => { if (e.key === 'Enter') btnEquipo?.click(); });
 
-btnPartido.addEventListener('click', async () => {
+if (btnPartido) btnPartido.addEventListener('click', async () => {
     const teamA = document.getElementById('teamA').value;
     const teamB = document.getElementById('teamB').value;
     const scoreA = parseInt(document.getElementById('scoreA').value) || 0;
     const scoreB = parseInt(document.getElementById('scoreB').value) || 0;
     if (teamA === teamB) return alert('Elige equipos diferentes');
-    btnPartido.disabled = true;
-    btnPartido.textContent = '...';
+    btnPartido.disabled = true; btnPartido.textContent = '...';
     try {
-        const res = await fetch(`${BASE_URL}/api/torneos/${torneoId}/partidos`, {
-            method: 'PUT',
-            headers: { 'Content-Type': 'application/json' },
+        await fetch(`${BASE_URL}/api/torneos/${torneoId}/partidos`, {
+            method: 'PUT', headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ teamA, teamB, scoreA, scoreB })
         });
-        if (!res.ok) throw new Error();
         document.getElementById('scoreA').value = 0;
         document.getElementById('scoreB').value = 0;
-        btnPartido.textContent = '✓ Guardado';
-        btnPartido.style.background = '#00ff88';
+        btnPartido.textContent = '✓ Guardado'; btnPartido.style.background = '#00ff88';
         setTimeout(() => { btnPartido.style.background = ''; btnPartido.textContent = 'Guardar Resultado'; }, 800);
         cargarTorneo();
-    } catch { alert('Error añadiendo partido'); }
+    } catch { alert('Error'); }
     finally { btnPartido.disabled = false; }
 });
 
 function actualizarSelects() {
     const a = document.getElementById('teamA');
     const b = document.getElementById('teamB');
+    if (!a || !b) return;
     const opts = torneoData.teams.map(t => `<option value="${t.name}">${t.name}</option>`).join('');
-    a.innerHTML = opts;
-    b.innerHTML = opts;
+    a.innerHTML = opts; b.innerHTML = opts;
     if (torneoData.teams.length > 1) b.selectedIndex = 1;
 }
 
@@ -180,15 +222,12 @@ function mostrarTabla() {
     const filas = equipos.map((t, i) => {
         const rankClass = i === 0 ? 'rank-1' : i === 1 ? 'rank-2' : i === 2 ? 'rank-3' : '';
         const color = getAvatarColor(t.name);
-        const initials = getInitials(t.name);
         return `<tr>
-            <td>
-                <div style="display:flex;align-items:center;gap:10px">
-                    <span class="rank-num ${rankClass}">${i + 1}</span>
-                    <span class="mini-avatar" style="background:${color}22;border-color:${color}44;color:${color}">${initials}</span>
-                    ${t.name}
-                </div>
-            </td>
+            <td><div style="display:flex;align-items:center;gap:8px">
+                <span class="rank-num ${rankClass}">${i + 1}</span>
+                <span class="mini-avatar" style="background:${color}22;border-color:${color}44;color:${color}">${getInitials(t.name)}</span>
+                ${t.name}
+            </div></td>
             <td class="pts-cell">${t.points}</td>
             <td>${t.wins + t.draws + t.losses}</td>
             <td>${t.wins}</td><td>${t.draws}</td><td>${t.losses}</td>
@@ -198,17 +237,10 @@ function mostrarTabla() {
     }).join('');
     tablaClasificacion.innerHTML = `
         <div class="section-header" style="margin-top:48px"><h2>Clasificación</h2></div>
-        <div class="tabla-wrapper">
-            <div class="tabla-title">Tabla General</div>
-            <table>
-                <thead><tr>
-                    <th>Equipo</th><th>Pts</th><th>PJ</th>
-                    <th>PG</th><th>PE</th><th>PP</th>
-                    <th>GF</th><th>GC</th><th>DG</th>
-                </tr></thead>
-                <tbody>${filas}</tbody>
-            </table>
-        </div>`;
+        <div class="tabla-wrapper"><div class="tabla-title">Tabla General</div>
+        <table><thead><tr>
+            <th>Equipo</th><th>Pts</th><th>PJ</th><th>PG</th><th>PE</th><th>PP</th><th>GF</th><th>GC</th><th>DG</th>
+        </tr></thead><tbody>${filas}</tbody></table></div>`;
 }
 
 function mostrarEstadisticas() {
@@ -220,35 +252,26 @@ function mostrarEstadisticas() {
         const partidos = torneoData.matches.filter(m => m.teamA === t.name || m.teamB === t.name).slice(-5);
         const iconos = partidos.map(m => {
             const esA = m.teamA === t.name;
-            const gF = esA ? m.scoreA : m.scoreB;
-            const gC = esA ? m.scoreB : m.scoreA;
+            const gF = esA ? m.scoreA : m.scoreB, gC = esA ? m.scoreB : m.scoreA;
             if (gF > gC) return '<span class="racha-w">V</span>';
             if (gF < gC) return '<span class="racha-l">D</span>';
             return '<span class="racha-d">E</span>';
         }).join('');
         const color = getAvatarColor(t.name);
-        const initials = getInitials(t.name);
-        return `
-            <div class="racha-item">
-                <div style="display:flex;align-items:center;gap:10px;min-width:0">
-                    <span class="mini-avatar" style="background:${color}22;border-color:${color}44;color:${color};flex-shrink:0">${initials}</span>
-                    <span class="racha-nombre">${t.name}</span>
-                </div>
-                <div class="racha-iconos">${iconos || '<span style="color:var(--text-muted);font-size:12px">Sin partidos</span>'}</div>
-            </div>`;
+        return `<div class="racha-item">
+            <div style="display:flex;align-items:center;gap:10px;min-width:0">
+                <span class="mini-avatar" style="background:${color}22;border-color:${color}44;color:${color};flex-shrink:0">${getInitials(t.name)}</span>
+                <span class="racha-nombre">${t.name}</span>
+            </div>
+            <div class="racha-iconos">${iconos || '<span style="color:var(--text-muted);font-size:12px">Sin partidos</span>'}</div>
+        </div>`;
     }).join('');
 
     estadisticasSection.innerHTML = `
         <div class="section-header" style="margin-top:48px"><h2>Estadísticas</h2></div>
         <div class="stats-grid">
-            <div class="chart-card">
-                <div class="chart-title">Goles por Equipo</div>
-                <canvas id="chartBars" height="220"></canvas>
-            </div>
-            <div class="chart-card">
-                <div class="chart-title">Resultados Globales</div>
-                <canvas id="chartPie" height="220"></canvas>
-            </div>
+            <div class="chart-card"><div class="chart-title">Goles por Equipo</div><canvas id="chartBars" height="220"></canvas></div>
+            <div class="chart-card"><div class="chart-title">Resultados Globales</div><canvas id="chartPie" height="220"></canvas></div>
         </div>
         <div class="chart-card" style="margin-top:12px">
             <div class="chart-title">Racha — Últimos 5 partidos</div>
@@ -258,22 +281,17 @@ function mostrarEstadisticas() {
     if (chartBars) { chartBars.destroy(); chartBars = null; }
     if (chartPie) { chartPie.destroy(); chartPie = null; }
 
-    const nombres = equipos.map(t => t.name);
     chartBars = new Chart(document.getElementById('chartBars').getContext('2d'), {
         type: 'bar',
-        data: {
-            labels: nombres,
-            datasets: [
-                { label: 'Goles a favor', data: equipos.map(t => t.goalsFor), backgroundColor: 'rgba(232,255,0,0.8)', borderRadius: 6, borderSkipped: false },
-                { label: 'Goles en contra', data: equipos.map(t => t.goalsAgainst), backgroundColor: 'rgba(255,59,59,0.6)', borderRadius: 6, borderSkipped: false }
-            ]
-        },
-        options: {
-            responsive: true, animation: { duration: 800, easing: 'easeOutQuart' },
+        data: { labels: equipos.map(t => t.name), datasets: [
+            { label: 'Goles a favor', data: equipos.map(t => t.goalsFor), backgroundColor: 'rgba(232,255,0,0.8)', borderRadius: 6, borderSkipped: false },
+            { label: 'Goles en contra', data: equipos.map(t => t.goalsAgainst), backgroundColor: 'rgba(255,59,59,0.6)', borderRadius: 6, borderSkipped: false }
+        ]},
+        options: { responsive: true, animation: { duration: 800 },
             plugins: { legend: { labels: { color: '#888899', font: { family: 'Barlow', size: 12 } } } },
             scales: {
-                x: { ticks: { color: '#888899', font: { family: 'Barlow' } }, grid: { color: 'rgba(255,255,255,0.05)' } },
-                y: { ticks: { color: '#888899', font: { family: 'Barlow' } }, grid: { color: 'rgba(255,255,255,0.05)' }, beginAtZero: true }
+                x: { ticks: { color: '#888899' }, grid: { color: 'rgba(255,255,255,0.05)' } },
+                y: { ticks: { color: '#888899' }, grid: { color: 'rgba(255,255,255,0.05)' }, beginAtZero: true }
             }
         }
     });
@@ -283,56 +301,63 @@ function mostrarEstadisticas() {
     const totalD = torneoData.teams.reduce((s, t) => s + t.losses, 0);
     chartPie = new Chart(document.getElementById('chartPie').getContext('2d'), {
         type: 'doughnut',
-        data: {
-            labels: ['Victorias', 'Empates', 'Derrotas'],
-            datasets: [{ data: [totalV, totalE, totalD], backgroundColor: ['rgba(232,255,0,0.85)', 'rgba(100,120,255,0.7)', 'rgba(255,59,59,0.7)'], borderColor: '#0a0a0f', borderWidth: 3, hoverOffset: 8 }]
-        },
-        options: {
-            responsive: true, animation: { duration: 800, easing: 'easeOutQuart' }, cutout: '60%',
+        data: { labels: ['Victorias','Empates','Derrotas'], datasets: [{
+            data: [totalV, totalE, totalD],
+            backgroundColor: ['rgba(232,255,0,0.85)','rgba(100,120,255,0.7)','rgba(255,59,59,0.7)'],
+            borderColor: '#0a0a0f', borderWidth: 3, hoverOffset: 8
+        }]},
+        options: { responsive: true, animation: { duration: 800 }, cutout: '60%',
             plugins: { legend: { position: 'bottom', labels: { color: '#888899', font: { family: 'Barlow', size: 12 }, padding: 16 } } }
         }
     });
 }
 
-function mostrarPartidos() {
-    if (!torneoData.matches.length) { partidosSection.innerHTML = ''; return; }
-    const items = [...torneoData.matches].reverse().map(m => {
-        const winA = m.scoreA > m.scoreB;
-        const winB = m.scoreB > m.scoreA;
+function mostrarPlayoff() {
+    if (!playoffSection) return;
+    const hasTeams = torneoData.teams.length >= 2;
+    const hasPlayoff = torneoData.playoff && torneoData.playoff.length > 0;
+    if (!hasTeams) { playoffSection.innerHTML = ''; return; }
+
+    const roundLabels = { QF1:'C. de final 1', QF2:'C. de final 2', QF3:'C. de final 3', QF4:'C. de final 4', SF1:'Semifinal 1', SF2:'Semifinal 2', F:'Final' };
+
+    if (!hasPlayoff) {
+        playoffSection.innerHTML = `
+            <div class="section-header" style="margin-top:48px"><h2>Playoff</h2></div>
+            <div class="playoff-empty">
+                <p>Genera el cuadro de eliminatorias basado en la clasificación actual.</p>
+                ${!isPublic ? `<button class="btn-primary" onclick="generarPlayoff()">⚡ Generar Playoff</button>` : ''}
+            </div>`;
+        return;
+    }
+
+    const matchHTML = (m) => {
+        const winA = m.played && m.scoreA > m.scoreB;
+        const winB = m.played && m.scoreB > m.scoreA;
         const colorA = getAvatarColor(m.teamA);
         const colorB = getAvatarColor(m.teamB);
+        const isPending = !m.teamA || !m.teamB;
         return `
-        <div class="marcador-card">
-            <div class="marcador-team ${winA ? 'winner' : ''}">
-                <div class="marcador-avatar" style="background:${colorA}22;border-color:${colorA}55;color:${colorA}">${getInitials(m.teamA)}</div>
-                <span class="marcador-name">${m.teamA}</span>
+        <div class="playoff-match ${m.played ? 'played' : ''} ${isPending ? 'pending' : ''}">
+            <div class="playoff-round-label">${roundLabels[m.round] || m.round}</div>
+            <div class="playoff-team ${winA ? 'winner' : ''}">
+                ${m.teamA ? `<span class="mini-avatar" style="background:${colorA}22;border-color:${colorA}44;color:${colorA}">${getInitials(m.teamA)}</span>` : '<span class="mini-avatar-empty"></span>'}
+                <span class="playoff-team-name">${m.teamA || '— Por definir —'}</span>
+                ${m.played ? `<span class="playoff-score ${winA ? 'score-win' : ''}">${m.scoreA}</span>` : ''}
             </div>
-            <div class="marcador-score-block">
-                <div class="marcador-score">
-                    <span class="${winA ? 'score-win' : ''}">${m.scoreA}</span>
-                    <span class="score-sep">:</span>
-                    <span class="${winB ? 'score-win' : ''}">${m.scoreB}</span>
-                </div>
-                <div class="marcador-label">FIN</div>
+            <div class="playoff-team ${winB ? 'winner' : ''}">
+                ${m.teamB ? `<span class="mini-avatar" style="background:${colorB}22;border-color:${colorB}44;color:${colorB}">${getInitials(m.teamB)}</span>` : '<span class="mini-avatar-empty"></span>'}
+                <span class="playoff-team-name">${m.teamB || '— Por definir —'}</span>
+                ${m.played ? `<span class="playoff-score ${winB ? 'score-win' : ''}">${m.scoreB}</span>` : ''}
             </div>
-            <div class="marcador-team right ${winB ? 'winner' : ''}">
-                <div class="marcador-avatar" style="background:${colorB}22;border-color:${colorB}55;color:${colorB}">${getInitials(m.teamB)}</div>
-                <span class="marcador-name">${m.teamB}</span>
-            </div>
-            <button class="btn-danger marcador-del" onclick="eliminarPartido('${m._id}')">✕</button>
+            ${!isPublic && !m.played && m.teamA && m.teamB ? `
+            <div class="playoff-input-row">
+                <input type="number" id="pA_${m.round}" min="0" value="0" class="score-input playoff-score-input">
+                <span class="vs-sep">—</span>
+                <input type="number" id="pB_${m.round}" min="0" value="0" class="score-input playoff-score-input">
+                <button class="btn-primary btn-sm" onclick="guardarPlayoff('${m.round}')">Guardar</button>
+            </div>` : ''}
+            ${m.round === 'F' && m.played ? `<div class="campeon-banner">🏆 ${m.scoreA > m.scoreB ? m.teamA : m.teamB}</div>` : ''}
         </div>`;
-    }).join('');
-    partidosSection.innerHTML = `
-        <div class="section-header" style="margin-top:48px"><h2>Partidos</h2></div>
-        <div class="marcadores-list">${items}</div>`;
-}
+    };
 
-async function eliminarPartido(id) {
-    if (!confirm('¿Eliminar este partido?')) return;
-    try {
-        await fetch(`${BASE_URL}/api/torneos/${torneoId}/partidos/${id}`, { method: 'DELETE' });
-        cargarTorneo();
-    } catch { alert('Error eliminando partido'); }
-}
-
-cargarTorneo();
+    const qfs = torneoData.playoff.filter(m
