@@ -18,12 +18,13 @@
 
     <div class="torneo-banner" id="torneoBanner">
         <div class="torneo-banner-content">
+            <div class="sport-badge" id="sportBadge" style="display:none"></div>
             <div class="torneo-banner-label">Torneo</div>
             <h1 class="torneo-banner-name" id="torneoTitulo">Cargando...</h1>
             <div class="torneo-banner-stats">
                 <div class="banner-stat">
                     <span class="banner-stat-value" id="statEquipos">0</span>
-                    <span class="banner-stat-label">Equipos</span>
+                    <span class="banner-stat-label" id="statEquiposLabel">Equipos</span>
                 </div>
                 <div class="banner-stat-divider"></div>
                 <div class="banner-stat">
@@ -33,7 +34,7 @@
                 <div class="banner-stat-divider"></div>
                 <div class="banner-stat">
                     <span class="banner-stat-value" id="statGoles">0</span>
-                    <span class="banner-stat-label">Goles</span>
+                    <span class="banner-stat-label" id="statGolesLabel">Goles</span>
                 </div>
             </div>
         </div>
@@ -43,10 +44,10 @@
 
     <div class="main-container">
         <div id="editControls">
-            <div class="section-header"><h2>Equipos</h2></div>
+            <div class="section-header"><h2 id="sectionEquiposLabel">Equipos</h2></div>
             <div class="equipo-add-form">
-                <input type="text" id="equipoName" placeholder="Nombre del equipo...">
-                <button class="btn-primary" id="btnEquipo">+ Añadir Equipo</button>
+                <input type="text" id="equipoName" placeholder="Nombre del equipo..." maxlength="40">
+                <button class="btn-primary" id="btnEquipo">+ Añadir</button>
             </div>
         </div>
 
@@ -57,7 +58,7 @@
             <div class="partido-form-card">
                 <div class="partido-form-teams">
                     <div class="partido-form-team">
-                        <label>Local</label>
+                        <label id="labelLocal">Local</label>
                         <select id="teamA"></select>
                     </div>
                     <div class="partido-form-vs">
@@ -66,10 +67,10 @@
                             <span class="vs-sep">—</span>
                             <input type="number" id="scoreB" class="score-input" min="0" value="0">
                         </div>
-                        <span class="vs-label">VS</span>
+                        <span class="vs-label" id="vsScoreLabel">VS</span>
                     </div>
                     <div class="partido-form-team right">
-                        <label>Visitante</label>
+                        <label id="labelVisitante">Visitante</label>
                         <select id="teamB"></select>
                     </div>
                 </div>
@@ -83,6 +84,11 @@
         <div id="partidosSection"></div>
         <div id="activitySection"></div>
     </div>
+
+    <footer class="app-footer">
+        <span class="footer-brand">Torneo<span>App</span></span>
+        <span class="footer-copy">© 2025 TorneoApp. Todos los derechos reservados.</span>
+    </footer>
 
     <script src="torneo.js"></script>
 </body>
