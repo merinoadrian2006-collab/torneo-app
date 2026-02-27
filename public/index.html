@@ -3,6 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+    <meta name="description" content="TorneoApp — Crea y gestiona torneos deportivos en segundos.">
     <title>TorneoApp — Gestión de Torneos</title>
     <link rel="stylesheet" href="styles.css">
 </head>
@@ -19,30 +20,90 @@
         <div class="login-box">
             <img src="logo.svg" class="login-icon-img" alt="TorneoApp">
             <h1 class="login-title">Bienvenido a<span>TorneoApp</span></h1>
-            <p class="login-subtitle">Introduce tu nombre o código para acceder a tus torneos. Recuérdalo para entrar desde cualquier dispositivo.</p>
+            <p class="login-subtitle">Elige un nombre o código único para acceder a tus torneos. Úsalo siempre para entrar desde cualquier dispositivo.</p>
             <div class="form-row">
-                <input type="text" id="loginInput" placeholder="Tu nombre o código..." maxlength="30" autocomplete="off">
+                <input type="text" id="loginInput" placeholder="Tu nombre o código..." maxlength="30" autocomplete="off" spellcheck="false">
                 <button class="btn-primary" id="btnLogin">Entrar</button>
             </div>
-            <p class="login-hint">⚠️ Guarda tu código — quien lo tenga verá tus torneos</p>
+            <div id="loginError" class="login-error" style="display:none"></div>
+            <p class="login-hint">⚠️ Guarda bien tu código — cualquier persona que lo conozca podrá ver tus torneos.</p>
+            <div class="privacy-notice">
+                <strong>🔒 Privacidad</strong>
+                <div class="privacy-feature-list">
+                    <div class="privacy-feature"><span class="privacy-feature-icon">✓</span><span>Autenticación con JWT seguro — tu sesión nunca viaja en texto plano.</span></div>
+                    <div class="privacy-feature"><span class="privacy-feature-icon">✓</span><span>Cada torneo solo es accesible con tu código. El servidor verifica la propiedad en cada operación.</span></div>
+                    <div class="privacy-feature"><span class="privacy-feature-icon">✓</span><span>No almacenamos correos, contraseñas ni datos personales.</span></div>
+                    <div class="privacy-feature"><span class="privacy-feature-icon">✓</span><span>Los torneos son privados por defecto — tú decides si compartirlos.</span></div>
+                </div>
+            </div>
         </div>
     </div>
 
     <div id="appScreen" style="display:none">
+        <div id="offlineBanner" class="offline-banner" style="display:none">
+            ⚠️ Sin conexión — los cambios no se guardarán hasta que vuelvas a conectarte.
+        </div>
         <div class="main-container">
             <div class="page-title">Tus<span class="highlight">Torneos</span></div>
             <p class="page-subtitle">Crea y gestiona torneos deportivos fácilmente.</p>
+
             <div class="section-header"><h2>Nuevo Torneo</h2></div>
-            <div class="form-row">
-                <input type="text" id="torneoName" placeholder="Nombre del torneo...">
-                <button class="btn-primary" id="btnCrear">Crear Torneo</button>
+            <div class="create-torneo-form">
+                <div class="form-row" style="margin-bottom:0">
+                    <input type="text" id="torneoName" placeholder="Nombre del torneo..." maxlength="60">
+                    <button class="btn-primary" id="btnCrear">Crear Torneo</button>
+                </div>
+                <div>
+                    <div class="sport-select-label">Deporte</div>
+                    <div class="sport-grid" id="sportGrid">
+                        <div class="sport-option selected" data-sport="futbol">
+                            <span class="sport-option-emoji">⚽</span>
+                            <span class="sport-option-name">Fútbol</span>
+                        </div>
+                        <div class="sport-option" data-sport="futbol_sala">
+                            <span class="sport-option-emoji">🏟️</span>
+                            <span class="sport-option-name">Fútbol Sala</span>
+                        </div>
+                        <div class="sport-option" data-sport="baloncesto">
+                            <span class="sport-option-emoji">🏀</span>
+                            <span class="sport-option-name">Baloncesto</span>
+                        </div>
+                        <div class="sport-option" data-sport="tenis">
+                            <span class="sport-option-emoji">🎾</span>
+                            <span class="sport-option-name">Tenis</span>
+                        </div>
+                        <div class="sport-option" data-sport="frontenis">
+                            <span class="sport-option-emoji">🎱</span>
+                            <span class="sport-option-name">Frontenis</span>
+                        </div>
+                        <div class="sport-option" data-sport="voleibol">
+                            <span class="sport-option-emoji">🏐</span>
+                            <span class="sport-option-name">Voleibol</span>
+                        </div>
+                        <div class="sport-option" data-sport="padel">
+                            <span class="sport-option-emoji">🏓</span>
+                            <span class="sport-option-name">Pádel</span>
+                        </div>
+                        <div class="sport-option" data-sport="rugby">
+                            <span class="sport-option-emoji">🏉</span>
+                            <span class="sport-option-name">Rugby</span>
+                        </div>
+                    </div>
+                </div>
             </div>
+
             <div class="section-header"><h2>Mis Torneos</h2></div>
             <div id="torneosList"></div>
-            <div style="margin-top:48px; text-align:center">
+            <div id="paginacion" style="display:none; margin-top:20px; text-align:center; display:flex; justify-content:center; gap:8px;"></div>
+            <div style="margin-top:52px; text-align:center">
                 <button class="btn-logout" id="btnLogout">Cerrar sesión</button>
             </div>
         </div>
+
+        <footer class="app-footer">
+            <span class="footer-brand">Torneo<span>App</span></span>
+            <span class="footer-copy">© 2025 TorneoApp. Todos los derechos reservados.</span>
+        </footer>
     </div>
 
     <script src="script.js"></script>
