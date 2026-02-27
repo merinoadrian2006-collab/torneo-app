@@ -360,4 +360,104 @@ function mostrarPlayoff() {
         </div>`;
     };
 
-    const qfs = torneoData.playoff.filter(m
+    const qfs = torneoData.playoff.filter(m => m.round.startsWith('QF'));
+    const sfs = torneoData.playoff.filter(m => m.round.startsWith('SF'));
+    const final = torneoData.playoff.find(m => m.round === 'F');
+
+    let bracketHTML = '<div class="playoff-bracket">';
+    if (qfs.length) bracketHTML += `<div class="playoff-col"><div class="playoff-col-title">Cuartos</div>${qfs.map(matchHTML).join('')}</div>`;
+    if (sfs.length) bracketHTML += `<div class="playoff-col"><div class="playoff-col-title">Semifinales</div>${sfs.map(matchHTML).join('')}</div>`;
+    if (final) bracketHTML += `<div class="playoff-col"><div class="playoff-col-title">Final</div>${matchHTML(final)}</div>`;
+    bracketHTML += '</div>';
+
+    playoffSection.innerHTML = `
+        <div class="section-header" style="margin-top:48px"><h2>Playoff</h2></div>
+        ${bracketHTML}
+        ${!isPublic ? `<div style="margin-top:16px;text-align:center"><button class="btn-danger" onclick="resetPlayoff()">Reiniciar playoff</button></div>` : ''}`;
+}
+
+async function generarPlayoff() {
+    try {
+        await fetch(`${BASE_URL}/api/torneos/${torneoId}/playoff/generar`, { method: 'POST' });
+        cargarTorneo();
+    } catch { alert('Error generando playoff'); }
+}
+
+async function guardarPlayoff(round) {
+    const scoreA = parseInt(document.getElementById(`pA_${round}`)?.value) || 0;
+    const scoreB = parseInt(document.getElementById(`pB_${round}`)?.value) || 0;
+    if (scoreA === scoreB) return alert('No puede haber empate en playoff');
+    try {
+        await fetch(`${BASE_URL}/api/torneos/${torneoId}/playoff/${round}`, {
+            method: 'PUT', headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ scoreA, scoreB })
+        });
+        cargarTorneo();
+    } catch { alert('Error guardando resultado'); }
+}
+
+async function resetPlayoff() {
+    if (!confirm('¿Reiniciar el playoff? Se perderán todos los resultados.')) return;
+    try {
+        await fetch(`${BASE_URL}/api/torneos/${torneoId}/playoff`, { method: 'DELETE' });
+        cargarTorneo();
+    } catch { alert('Error'); }
+}
+
+function mostrarPartidos() {
+    if (!torneoData.matches.length) { partidosSection.innerHTML = ''; return; }
+    const items = [...torneoData.matches].reverse().map(m => {
+        const winA = m.scoreA > m.scoreB, winB = m.scoreB > m.scoreA;
+        const colorA = getAvatarColor(m.teamA), colorB = getAvatarColor(m.teamB);
+        return `
+        <div class="marcador-card">
+            <div class="marcador-team ${winA ? 'winner' : ''}">
+                <div class="marcador-avatar" style="background:${colorA}22;border-color:${colorA}55;color:${colorA}">${getInitials(m.teamA)}</div>
+                <span class="marcador-name">${m.teamA}</span>
+            </div>
+            <div class="marcador-score-block">
+                <div class="marcador-score">
+                    <span class="${winA ? 'score-win' : ''}">${m.scoreA}</span>
+                    <span class="score-sep">:</span>
+                    <span class="${winB ? 'score-win' : ''}">${m.scoreB}</span>
+                </div>
+                <div class="marcador-label">FIN</div>
+            </div>
+            <div class="marcador-team right ${winB ? 'winner' : ''}">
+                <div class="marcador-avatar" style="background:${colorB}22;border-color:${colorB}55;color:${colorB}">${getInitials(m.teamB)}</div>
+                <span class="marcador-name">${m.teamB}</span>
+            </div>
+            ${!isPublic ? `<button class="btn-danger marcador-del" onclick="eliminarPartido('${m._id}')">✕</button>` : ''}
+        </div>`;
+    }).join('');
+    partidosSection.innerHTML = `
+        <div class="section-header" style="margin-top:48px"><h2>Partidos</h2></div>
+        <div class="marcadores-list">${items}</div>`;
+}
+
+async function eliminarPartido(id) {
+    if (!confirm('¿Eliminar este partido?')) return;
+    try {
+        await fetch(`${BASE_URL}/api/torneos/${torneoId}/partidos/${id}`, { method: 'DELETE' });
+        cargarTorneo();
+    } catch { alert('Error'); }
+}
+
+function mostrarActividad() {
+    if (!activitySection) return;
+    if (!torneoData.activity || !torneoData.activity.length) { activitySection.innerHTML = ''; return; }
+    const items = torneoData.activity.slice(0, 10).map(a => {
+        const d = new Date(a.date);
+        const hora = d.toLocaleTimeString('es', { hour: '2-digit', minute: '2-digit' });
+        const dia = d.toLocaleDateString('es', { day: '2-digit', month: 'short' });
+        return `<div class="activity-item">
+            <span class="activity-text">${a.text}</span>
+            <span class="activity-time">${dia} ${hora}</span>
+        </div>`;
+    }).join('');
+    activitySection.innerHTML = `
+        <div class="section-header" style="margin-top:48px"><h2>Actividad Reciente</h2></div>
+        <div class="activity-list">${items}</div>`;
+}
+
+cargarTorneo();
