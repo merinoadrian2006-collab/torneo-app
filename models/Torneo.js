@@ -11,10 +11,23 @@ const TeamSchema = new mongoose.Schema({
 });
 
 const MatchSchema = new mongoose.Schema({
-  teamA: String,
-  teamB: String,
-  scoreA: Number,
-  scoreB: Number,
+  teamA: String, teamB: String,
+  scoreA: Number, scoreB: Number,
+  round: { type: String, default: 'league' },
+  date: { type: Date, default: Date.now }
+});
+
+const PlayoffMatchSchema = new mongoose.Schema({
+  round: String,
+  teamA: { type: String, default: '' },
+  teamB: { type: String, default: '' },
+  scoreA: { type: Number, default: null },
+  scoreB: { type: Number, default: null },
+  played: { type: Boolean, default: false }
+});
+
+const ActivitySchema = new mongoose.Schema({
+  text: String,
   date: { type: Date, default: Date.now }
 });
 
@@ -22,7 +35,10 @@ const TorneoSchema = new mongoose.Schema({
   name: String,
   sessionId: String,
   teams: [TeamSchema],
-  matches: [MatchSchema]
-});
+  matches: [MatchSchema],
+  playoff: [PlayoffMatchSchema],
+  activity: [ActivitySchema],
+  publicShare: { type: Boolean, default: false }
+}, { timestamps: true });
 
 module.exports = mongoose.model('Torneo', TorneoSchema);
