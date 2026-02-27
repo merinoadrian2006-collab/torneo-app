@@ -2,7 +2,7 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
     <title>Torneo — TorneoApp</title>
     <link rel="stylesheet" href="styles.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
@@ -39,40 +39,49 @@
         </div>
     </div>
 
+    <div id="shareBar"></div>
+
     <div class="main-container">
-        <div class="section-header"><h2>Equipos</h2></div>
-        <div class="equipo-add-form">
-            <input type="text" id="equipoName" placeholder="Nombre del equipo...">
-            <button class="btn-primary" id="btnEquipo">+ Añadir Equipo</button>
+        <div id="editControls">
+            <div class="section-header"><h2>Equipos</h2></div>
+            <div class="equipo-add-form">
+                <input type="text" id="equipoName" placeholder="Nombre del equipo...">
+                <button class="btn-primary" id="btnEquipo">+ Añadir Equipo</button>
+            </div>
         </div>
+
         <div id="equiposList"></div>
 
-        <div class="section-header"><h2>Registrar Partido</h2></div>
-        <div class="partido-form-card">
-            <div class="partido-form-teams">
-                <div class="partido-form-team">
-                    <label>Local</label>
-                    <select id="teamA"></select>
-                </div>
-                <div class="partido-form-vs">
-                    <div class="vs-inputs">
-                        <input type="number" id="scoreA" class="score-input" min="0" value="0">
-                        <span class="vs-sep">—</span>
-                        <input type="number" id="scoreB" class="score-input" min="0" value="0">
+        <div id="editControls2">
+            <div class="section-header"><h2>Registrar Partido</h2></div>
+            <div class="partido-form-card">
+                <div class="partido-form-teams">
+                    <div class="partido-form-team">
+                        <label>Local</label>
+                        <select id="teamA"></select>
                     </div>
-                    <span class="vs-label">VS</span>
+                    <div class="partido-form-vs">
+                        <div class="vs-inputs">
+                            <input type="number" id="scoreA" class="score-input" min="0" value="0">
+                            <span class="vs-sep">—</span>
+                            <input type="number" id="scoreB" class="score-input" min="0" value="0">
+                        </div>
+                        <span class="vs-label">VS</span>
+                    </div>
+                    <div class="partido-form-team right">
+                        <label>Visitante</label>
+                        <select id="teamB"></select>
+                    </div>
                 </div>
-                <div class="partido-form-team right">
-                    <label>Visitante</label>
-                    <select id="teamB"></select>
-                </div>
+                <button class="btn-primary btn-full" id="btnPartido">Guardar Resultado</button>
             </div>
-            <button class="btn-primary btn-full" id="btnPartido">Guardar Resultado</button>
         </div>
 
         <div id="tablaClasificacion"></div>
+        <div id="playoffSection"></div>
         <div id="estadisticasSection"></div>
         <div id="partidosSection"></div>
+        <div id="activitySection"></div>
     </div>
 
     <script src="torneo.js"></script>
