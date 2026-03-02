@@ -623,23 +623,242 @@ table tr:hover .rank-num { transform: scale(1.2) rotate(-4deg); }
     border: 1px solid var(--border-accent); margin-top: 4px;
 }
 
-/* ── Activity ─────────────────────────────────────────── */
+/* ── Activity — with undo ─────────────────────────────── */
 .activity-list {
     background: var(--bg-card); border: 1px solid var(--border);
     border-radius: var(--radius); overflow: hidden;
 }
 .activity-item {
     display: flex; align-items: center; justify-content: space-between;
-    gap: 14px; padding: 11px 18px;
+    gap: 10px; padding: 11px 16px;
     border-bottom: 1px solid var(--border-subtle); transition: background 0.13s;
     animation: fadeUp 0.35s ease both;
 }
 .activity-item:last-child { border-bottom: none; }
 .activity-item:hover { background: var(--bg-elevated); }
+.activity-left { display: flex; align-items: center; gap: 10px; flex: 1; min-width: 0; }
+.activity-dot {
+    width: 6px; height: 6px; border-radius: 50%;
+    background: var(--text-muted); flex-shrink: 0;
+}
+.activity-dot.dot-undoable { background: var(--accent); box-shadow: 0 0 6px rgba(232,255,0,0.4); }
 .activity-text { font-size: 13px; color: var(--text-secondary); flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.activity-time { font-size: 11px; color: var(--text-muted); white-space: nowrap; font-feature-settings: "tnum"; flex-shrink: 0; }
+.activity-right { display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
+.activity-time { font-size: 11px; color: var(--text-muted); white-space: nowrap; font-feature-settings: "tnum"; }
+.btn-undo {
+    padding: 4px 10px; background: rgba(232,255,0,0.07);
+    border: 1px solid rgba(232,255,0,0.2); border-radius: var(--radius-xs);
+    color: var(--accent); font-family: 'Barlow', sans-serif;
+    font-size: 11px; font-weight: 600; cursor: pointer;
+    transition: all 0.17s; white-space: nowrap;
+}
+.btn-undo:hover { background: rgba(232,255,0,0.14); border-color: rgba(232,255,0,0.4); }
 
-/* ── Login ────────────────────────────────────────────── */
+/* ── Toast notification ───────────────────────────────── */
+.app-toast {
+    position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%);
+    background: var(--bg-elevated); border: 1px solid var(--border);
+    border-radius: var(--radius-sm); padding: 11px 20px;
+    font-size: 13px; font-weight: 500; color: var(--text-primary);
+    box-shadow: 0 8px 28px rgba(0,0,0,0.4);
+    z-index: 999; white-space: nowrap;
+    animation: toastIn 0.3s cubic-bezier(0.34,1.56,0.64,1) both;
+}
+.app-toast.success { border-color: rgba(74,222,128,0.3); color: var(--green); background: rgba(74,222,128,0.07); }
+@keyframes toastIn {
+    from { opacity: 0; transform: translateX(-50%) translateY(20px); }
+    to   { opacity: 1; transform: translateX(-50%) translateY(0); }
+}
+
+/* ── Stats layout — sidebar pie ──────────────────────── */
+.stats-grid {
+    display: grid;
+    grid-template-columns: 1fr 280px;
+    gap: 12px;
+    align-items: start;
+}
+.chart-card--bars { height: 100%; }
+.stats-right-col {
+    display: flex; flex-direction: column; gap: 12px;
+}
+.chart-card--half { padding: 18px 20px; }
+.pie-wrap { max-width: 180px; margin: 8px auto 0; }
+
+/* ── Share Bar ────────────────────────────────────────── */
+.share-bar-inner {
+    max-width: 100%;
+    display: flex; align-items: center; justify-content: space-between;
+    gap: 12px; flex-wrap: wrap;
+    padding: 10px 40px;
+    background: rgba(232,255,0,0.025);
+    border-bottom: 1px solid rgba(232,255,0,0.08);
+}
+.share-info { display: flex; align-items: center; gap: 10px; }
+.share-label {
+    font-size: 11px; font-weight: 700; letter-spacing: 1.5px;
+    text-transform: uppercase; color: var(--text-muted);
+}
+.share-status {
+    font-size: 11px; font-weight: 600; color: var(--text-muted);
+    background: var(--bg-elevated); border: 1px solid var(--border);
+    padding: 3px 10px; border-radius: 20px;
+}
+.share-status.active {
+    color: var(--green); border-color: rgba(74,222,128,0.3);
+    background: rgba(74,222,128,0.07);
+}
+.share-actions { display: flex; align-items: center; gap: 7px; flex-wrap: wrap; }
+.share-url {
+    font-size: 12px !important; padding: 7px 11px !important;
+    background: var(--bg-elevated) !important;
+    border: 1px solid var(--border) !important;
+    border-radius: var(--radius-xs) !important;
+    color: var(--text-secondary) !important;
+    width: 200px !important; cursor: text; outline: none !important;
+}
+.btn-share-copy {
+    padding: 7px 13px; background: var(--bg-elevated);
+    border: 1px solid var(--border); border-radius: var(--radius-xs);
+    color: var(--text-secondary); font-family: 'Barlow', sans-serif;
+    font-size: 12px; cursor: pointer; transition: all 0.17s; white-space: nowrap;
+}
+.btn-share-copy:hover { border-color: var(--border-accent); color: var(--accent); }
+.btn-share-toggle {
+    padding: 7px 14px;
+    background: rgba(74,222,128,0.08);
+    border: 1px solid rgba(74,222,128,0.25);
+    border-radius: var(--radius-xs);
+    color: var(--green); font-family: 'Barlow', sans-serif;
+    font-size: 12px; font-weight: 600; cursor: pointer; transition: all 0.17s; white-space: nowrap;
+}
+.btn-share-toggle:hover { background: rgba(74,222,128,0.15); }
+.btn-share-toggle.active {
+    background: rgba(255,68,68,0.07); border-color: rgba(255,68,68,0.22); color: var(--red);
+}
+.btn-share-toggle.active:hover { background: rgba(255,68,68,0.14); }
+
+/* ── Responsive — MOBILE FIRST ────────────────────────── */
+@media (max-width: 700px) {
+    /* Layout */
+    .app-header { padding: 12px 16px; }
+    .main-container { padding: 22px 14px 0; }
+    .torneo-banner { padding: 22px 16px 18px; }
+    .torneo-banner::before { display: none; }
+
+    /* Banner title smaller on mobile */
+    .torneo-banner-name { font-size: clamp(28px, 9vw, 46px); margin-bottom: 18px; }
+    .banner-stat-value { font-size: 20px; }
+    .banner-stat { padding-right: 16px; }
+    .banner-stat-divider { margin-right: 16px; }
+
+    /* Share bar stacks */
+    .share-bar-inner { padding: 10px 14px; flex-direction: column; align-items: flex-start; gap: 8px; }
+    .share-url { width: 100% !important; }
+    .share-actions { width: 100%; }
+    .share-actions .btn-share-toggle,
+    .share-actions .btn-share-copy { flex: 1; text-align: center; justify-content: center; }
+
+    /* Table compact */
+    table th, table td { padding: 9px 6px; font-size: 11px; }
+    table th:first-child, table td:first-child { padding-left: 10px; }
+    .table-avatar { display: none; }
+
+    /* Login */
+    .login-box { padding: 26px 16px; }
+    .login-title { font-size: 30px; }
+
+    /* Stats — stacks to single col */
+    .stats-grid { grid-template-columns: 1fr; }
+    .stats-right-col { flex-direction: row; gap: 10px; }
+    .chart-card--half { flex: 1; min-width: 0; padding: 14px; }
+    .pie-wrap { max-width: 130px; }
+    .racha-nombre { min-width: 60px; font-size: 11px; }
+    .racha-w, .racha-l, .racha-d { width: 20px; height: 20px; font-size: 9px; }
+
+    /* Partido form stacks */
+    .partido-form-teams { grid-template-columns: 1fr; gap: 10px; }
+    .partido-form-vs { flex-direction: row; justify-content: center; gap: 12px; }
+    .vs-inputs .score-input { width: 54px !important; }
+
+    /* Equipos — 2 col */
+    .equipos-grid { grid-template-columns: 1fr 1fr; gap: 7px; }
+    .equipo-avatar { width: 32px; height: 32px; font-size: 11px; }
+    .equipo-card-name { font-size: 12px; }
+
+    /* Marcadores — compact */
+    .marcador-card { gap: 5px; padding: 10px 12px; }
+    .marcador-name { display: none; }
+    .marcador-avatar { width: 34px; height: 34px; font-size: 11px; }
+    .marcador-score { font-size: 22px; gap: 6px; }
+
+    /* Playoff — vertical */
+    .playoff-bracket { flex-direction: column; }
+    .playoff-col { min-width: 0; }
+    .playoff-match { padding: 11px 12px; }
+
+    /* Activity undo button on mobile wraps */
+    .activity-item { flex-wrap: wrap; gap: 6px; }
+    .activity-right { width: 100%; justify-content: space-between; }
+    .activity-text { font-size: 12px; }
+    .btn-undo { font-size: 10px; padding: 3px 8px; }
+
+    /* Section headers */
+    .section-header { margin: 32px 0 12px; }
+
+    /* Footer */
+    .app-footer { padding: 18px 14px; flex-direction: column; align-items: center; text-align: center; }
+
+    /* Sport grid — 3 col */
+    .sport-grid { grid-template-columns: repeat(3, 1fr); }
+    .sport-option { padding: 10px 6px; }
+    .sport-option-emoji { font-size: 18px; }
+    .sport-option-name { font-size: 9px; }
+
+    /* Page title */
+    .page-title { font-size: clamp(32px, 10vw, 52px); }
+
+    /* Toast full width on mobile */
+    .app-toast { left: 14px; right: 14px; transform: none; white-space: normal; text-align: center; }
+}
+
+@media (max-width: 380px) {
+    .equipos-grid { grid-template-columns: 1fr; }
+    .stats-right-col { flex-direction: column; }
+}
+
+/* ── Offline Banner ───────────────────────────────────── */
+.offline-banner {
+    background: rgba(255,165,0,0.12); border-bottom: 1px solid rgba(255,165,0,0.25);
+    color: #ffb347; font-size: 12px; font-weight: 500; letter-spacing: 0.3px;
+    text-align: center; padding: 9px 20px;
+    animation: slideDown 0.3s ease both;
+}
+
+/* ── Login error ──────────────────────────────────────── */
+.login-error {
+    margin-top: 10px; padding: 9px 14px; border-radius: var(--radius-sm);
+    background: var(--red-dim); border: 1px solid rgba(255,68,68,0.3);
+    color: var(--red); font-size: 13px; text-align: center;
+    animation: fadeIn 0.25s ease both;
+}
+
+/* ── Pagination ───────────────────────────────────────── */
+.btn-page {
+    padding: 7px 16px; background: var(--bg-card);
+    border: 1px solid var(--border); border-radius: var(--radius-sm);
+    color: var(--text-secondary); font-family: 'Barlow', sans-serif;
+    font-size: 13px; cursor: pointer; transition: all 0.18s;
+}
+.btn-page:hover { border-color: var(--border-accent); color: var(--accent); }
+.page-info { font-size: 12px; color: var(--text-muted); align-self: center; padding: 0 6px; }
+
+/* ── Table avatar (inline small) ─────────────────────── */
+.table-avatar {
+    display: inline-flex; align-items: center; justify-content: center;
+    width: 22px; height: 22px; border-radius: 5px; border: 1px solid;
+    font-family: 'Barlow Condensed', sans-serif; font-weight: 800; font-size: 9px;
+    flex-shrink: 0; margin-right: 7px; vertical-align: middle;
+}
 .login-screen {
     min-height: calc(100vh - 69px);
     display: flex; align-items: center; justify-content: center; padding: 24px;
@@ -711,61 +930,259 @@ table tr:hover .rank-num { transform: scale(1.2) rotate(-4deg); }
 ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
 ::-webkit-scrollbar-thumb:hover { background: var(--text-muted); }
 
-/* ── Responsive ───────────────────────────────────────── */
+
+/* ═══════════════════════════════════════════════════════
+   VISUAL OVERHAUL — Decorative & Wow effects
+   ═══════════════════════════════════════════════════════ */
+
+/* ── Animated noise grain overlay on body ─────────────── */
+body::before {
+    content: '';
+    position: fixed; inset: 0; z-index: 0; pointer-events: none;
+    opacity: 0.028;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E");
+    background-size: 180px 180px;
+}
+
+/* ── Animated accent orbs on body ────────────────────── */
+body::after {
+    content: '';
+    position: fixed; inset: 0; z-index: 0; pointer-events: none;
+    background:
+        radial-gradient(ellipse 600px 400px at 15% 20%, rgba(232,255,0,0.04) 0%, transparent 70%),
+        radial-gradient(ellipse 500px 350px at 85% 75%, rgba(0,212,255,0.035) 0%, transparent 70%),
+        radial-gradient(ellipse 400px 300px at 50% 110%, rgba(180,80,255,0.03) 0%, transparent 70%);
+    animation: orbDrift 18s ease-in-out infinite alternate;
+}
+@keyframes orbDrift {
+    0%   { transform: translate(0, 0) scale(1); }
+    33%  { transform: translate(20px, -15px) scale(1.03); }
+    66%  { transform: translate(-15px, 10px) scale(0.97); }
+    100% { transform: translate(10px, -20px) scale(1.02); }
+}
+
+/* Make sure content sits above overlays */
+.app-header, .main-container, .torneo-banner, .share-bar-inner,
+.login-screen, #appScreen, .app-footer { position: relative; z-index: 1; }
+
+/* ── Header — glowing bottom edge on scroll ──────────── */
+.app-header {
+    border-bottom-color: transparent;
+    box-shadow: 0 1px 0 rgba(255,255,255,0.06), 0 4px 24px rgba(0,0,0,0.4);
+}
+.app-header::after {
+    content: '';
+    position: absolute; bottom: 0; left: 5%; right: 5%; height: 1px;
+    background: linear-gradient(90deg, transparent, rgba(232,255,0,0.3) 30%, rgba(0,212,255,0.2) 70%, transparent);
+}
+
+/* ── Torneo banner — decorative corner accents ────────── */
+.torneo-banner-name {
+    background: linear-gradient(135deg, #ffffff 0%, rgba(232,255,0,0.85) 60%, #ffffff 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    filter: drop-shadow(0 2px 24px rgba(232,255,0,0.15));
+}
+
+/* Decorative grid pattern behind banner */
+.torneo-banner::before {
+    content: '';
+    position: absolute; inset: 0; pointer-events: none;
+    background-image:
+        linear-gradient(rgba(232,255,0,0.03) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(232,255,0,0.03) 1px, transparent 1px);
+    background-size: 40px 40px;
+    mask-image: linear-gradient(to bottom, transparent 0%, rgba(0,0,0,0.6) 40%, transparent 100%);
+    -webkit-mask-image: linear-gradient(to bottom, transparent 0%, rgba(0,0,0,0.6) 40%, transparent 100%);
+}
+/* Override old ::before accent line */
+.torneo-banner::after {
+    content: '';
+    position: absolute; left: 0; top: 0; bottom: 0; width: 3px;
+    background: linear-gradient(to bottom, var(--accent), rgba(0,212,255,0.5), transparent);
+    opacity: 0.8;
+}
+
+/* ── Banner stat values pulse on load ─────────────────── */
+.banner-stat-value {
+    background: linear-gradient(135deg, #e8ff00, #00d4ff);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    filter: drop-shadow(0 0 8px rgba(232,255,0,0.3));
+}
+
+/* ── Sport badge glow ─────────────────────────────────── */
+.sport-badge {
+    box-shadow: 0 0 12px rgba(232,255,0,0.15), inset 0 1px 0 rgba(255,255,255,0.06);
+    backdrop-filter: blur(8px);
+}
+
+/* ── Section header — animated accent line ────────────── */
+.section-header::after {
+    background: linear-gradient(90deg, rgba(232,255,0,0.3), rgba(0,212,255,0.15), transparent);
+    height: 1px;
+}
+.section-header h2 {
+    color: var(--accent);
+    text-shadow: 0 0 12px rgba(232,255,0,0.25);
+}
+
+/* ── Torneo cards — hover shimmer effect ──────────────── */
+.torneo-card {
+    overflow: hidden;
+}
+.torneo-card::after {
+    content: '';
+    position: absolute; inset: 0;
+    background: linear-gradient(105deg, transparent 40%, rgba(255,255,255,0.04) 50%, transparent 60%);
+    transform: translateX(-100%);
+    transition: transform 0s;
+    pointer-events: none;
+}
+.torneo-card:hover::after {
+    transform: translateX(100%);
+    transition: transform 0.5s ease;
+}
+
+/* ── Equipo cards — coloured left border on hover ─────── */
+.equipo-card {
+    transition: border-color 0.2s, transform 0.22s cubic-bezier(0.34,1.56,0.64,1), box-shadow 0.2s;
+}
+.equipo-card:hover {
+    box-shadow: 0 4px 20px rgba(0,0,0,0.3), 0 0 0 1px rgba(232,255,0,0.1);
+}
+
+/* ── Tabla — first row special glow row ───────────────── */
+table tbody tr:first-child td {
+    background: rgba(232,255,0,0.03);
+}
+table tbody tr:first-child .pts-cell {
+    text-shadow: 0 0 10px rgba(232,255,0,0.5);
+}
+
+/* ── rank-1 badge pulse ───────────────────────────────── */
+.rank-1 {
+    box-shadow: 0 0 0 0 rgba(232,255,0,0.5);
+    animation: rankPulse 2.5s ease infinite;
+}
+@keyframes rankPulse {
+    0%   { box-shadow: 0 0 0 0 rgba(232,255,0,0.5); }
+    60%  { box-shadow: 0 0 0 7px rgba(232,255,0,0); }
+    100% { box-shadow: 0 0 0 0 rgba(232,255,0,0); }
+}
+
+/* ── Btn primary — more dramatic hover ────────────────── */
+.btn-primary:hover {
+    box-shadow: 0 8px 30px rgba(232,255,0,0.35), 0 0 0 1px rgba(232,255,0,0.2);
+}
+
+/* ── Chart cards — glass morphism ────────────────────── */
+.chart-card {
+    background: linear-gradient(135deg, rgba(24,24,31,0.9) 0%, rgba(17,17,24,0.95) 100%);
+    border: 1px solid rgba(255,255,255,0.08);
+    box-shadow: 0 8px 32px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.04);
+    backdrop-filter: blur(8px);
+    position: relative; overflow: hidden;
+}
+.chart-card::before {
+    content: '';
+    position: absolute; top: 0; left: 0; right: 0; height: 1px;
+    background: linear-gradient(90deg, transparent, rgba(232,255,0,0.2), rgba(0,212,255,0.15), transparent);
+}
+
+
+/* ── Playoff bracket — neon connectors ────────────────── */
+.playoff-match.played {
+    border-color: rgba(232,255,0,0.2);
+    box-shadow: 0 0 12px rgba(232,255,0,0.05), inset 0 0 20px rgba(232,255,0,0.02);
+}
+.campeon-banner {
+    background: linear-gradient(135deg, rgba(232,255,0,0.12), rgba(0,212,255,0.08));
+    border-color: rgba(232,255,0,0.3);
+    box-shadow: 0 0 16px rgba(232,255,0,0.1);
+    animation: campeonGlow 2s ease-in-out infinite alternate;
+}
+@keyframes campeonGlow {
+    from { box-shadow: 0 0 10px rgba(232,255,0,0.1); }
+    to   { box-shadow: 0 0 22px rgba(232,255,0,0.22), 0 0 40px rgba(232,255,0,0.06); }
+}
+
+/* ── Marcador cards — score glow ──────────────────────── */
+.marcador-score { box-shadow: inset 0 1px 0 rgba(255,255,255,0.05); }
+.score-win { text-shadow: 0 0 10px currentColor; }
+
+/* ── Login box — extra depth ──────────────────────────── */
+.login-box {
+    box-shadow: 0 32px 80px rgba(0,0,0,0.6), 0 0 0 1px rgba(255,255,255,0.05), inset 0 1px 0 rgba(255,255,255,0.05);
+    background: linear-gradient(160deg, rgba(20,20,28,0.98) 0%, rgba(14,14,20,0.99) 100%);
+}
+.login-box::before {
+    content: '';
+    position: absolute; top: 0; left: 20%; right: 20%; height: 1px;
+    background: linear-gradient(90deg, transparent, rgba(232,255,0,0.3), transparent);
+    border-radius: 0 0 50% 50%;
+}
+.login-box { position: relative; }
+
+/* ── Sport option cards — enhanced ────────────────────── */
+.sport-option {
+    position: relative; overflow: hidden;
+}
+.sport-option::after {
+    content: '';
+    position: absolute; inset: 0;
+    background: linear-gradient(135deg, rgba(232,255,0,0.06) 0%, transparent 60%);
+    opacity: 0; transition: opacity 0.2s;
+}
+.sport-option:hover::after, .sport-option.selected::after { opacity: 1; }
+.sport-option.selected {
+    box-shadow: 0 0 0 1px rgba(232,255,0,0.4), 0 4px 16px rgba(232,255,0,0.1);
+}
+
+/* ── Index page title — gradient text ─────────────────── */
+.page-title {
+    background: linear-gradient(135deg, #ffffff 0%, #e0e0e0 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+.page-title .highlight {
+    background: linear-gradient(135deg, #e8ff00 0%, #b8ff00 50%, #00d4ff 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    filter: drop-shadow(0 0 20px rgba(232,255,0,0.3));
+}
+
+/* ── Empty state — subtle floating animation ──────────── */
+.empty-state .empty-icon {
+    animation: popIn 0.55s cubic-bezier(0.34,1.56,0.64,1) 0.35s both,
+               floatIcon 4s ease-in-out 1s infinite;
+}
+@keyframes floatIcon {
+    0%, 100% { transform: translateY(0); }
+    50%       { transform: translateY(-8px); }
+}
+
+/* ── Scrollbar neon ───────────────────────────────────── */
+::-webkit-scrollbar-thumb {
+    background: linear-gradient(to bottom, rgba(232,255,0,0.2), rgba(0,212,255,0.15));
+}
+::-webkit-scrollbar-thumb:hover {
+    background: linear-gradient(to bottom, rgba(232,255,0,0.4), rgba(0,212,255,0.3));
+}
+
+/* ── Mobile gradient text fallbacks ──────────────────── */
 @media (max-width: 700px) {
-    .app-header { padding: 14px 18px; }
-    .main-container { padding: 26px 16px 0; }
-    .torneo-banner { padding: 26px 18px 22px; }
-    .torneo-banner::before { display: none; }
-    .share-bar-inner { padding: 11px 18px; flex-direction: column; align-items: flex-start; gap: 10px; }
-    .share-url { width: 100% !important; }
-    .share-actions { width: 100%; flex-wrap: wrap; }
-    table th, table td { padding: 9px 7px; font-size: 12px; }
-    table th:first-child, table td:first-child { padding-left: 12px; }
-    .login-box { padding: 30px 20px; }
-    .stats-grid { grid-template-columns: 1fr; }
-    .racha-nombre { min-width: 70px; }
-    .partido-form-teams { grid-template-columns: 1fr; gap: 10px; }
-    .partido-form-vs { flex-direction: row; justify-content: center; }
-    .marcador-card { grid-template-columns: 1fr auto 1fr auto; gap: 7px; }
-    .marcador-name { display: none; }
-    .equipos-grid { grid-template-columns: 1fr 1fr; }
-    .playoff-bracket { flex-direction: column; }
-    .playoff-col { min-width: 0; }
-    .app-footer { padding: 22px 16px; flex-direction: column; align-items: center; text-align: center; }
-    .sport-grid { grid-template-columns: repeat(3, 1fr); }
-}
-
-/* ── Offline Banner ───────────────────────────────────── */
-.offline-banner {
-    background: rgba(255,165,0,0.12); border-bottom: 1px solid rgba(255,165,0,0.25);
-    color: #ffb347; font-size: 12px; font-weight: 500; letter-spacing: 0.3px;
-    text-align: center; padding: 9px 20px;
-    animation: slideDown 0.3s ease both;
-}
-
-/* ── Login error ──────────────────────────────────────── */
-.login-error {
-    margin-top: 10px; padding: 9px 14px; border-radius: var(--radius-sm);
-    background: var(--red-dim); border: 1px solid rgba(255,68,68,0.3);
-    color: var(--red); font-size: 13px; text-align: center;
-    animation: fadeIn 0.25s ease both;
-}
-
-/* ── Pagination ───────────────────────────────────────── */
-.btn-page {
-    padding: 7px 16px; background: var(--bg-card);
-    border: 1px solid var(--border); border-radius: var(--radius-sm);
-    color: var(--text-secondary); font-family: 'Barlow', sans-serif;
-    font-size: 13px; cursor: pointer; transition: all 0.18s;
-}
-.btn-page:hover { border-color: var(--border-accent); color: var(--accent); }
-.page-info { font-size: 12px; color: var(--text-muted); align-self: center; padding: 0 6px; }
-
-/* ── Table avatar (inline small) ─────────────────────── */
-.table-avatar {
-    display: inline-flex; align-items: center; justify-content: center;
-    width: 22px; height: 22px; border-radius: 5px; border: 1px solid;
-    font-family: 'Barlow Condensed', sans-serif; font-weight: 800; font-size: 9px;
-    flex-shrink: 0; margin-right: 7px; vertical-align: middle;
+    .torneo-banner-name {
+        -webkit-text-fill-color: var(--text-primary);
+        filter: none;
+    }
+    .page-title, .page-title .highlight {
+        -webkit-text-fill-color: unset;
+    }
+    .page-title { color: var(--text-primary); }
+    .page-title .highlight { color: var(--accent); }
 }
