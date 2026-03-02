@@ -10,24 +10,10 @@ if (oldSession && !existingToken) {
     localStorage.removeItem('torneoapp_session');
 }
 
-// ── Sport config (shared with torneo.js via SPORTS global) ──
-const SPORTS = {
-    futbol:      { emoji: '⚽', name: 'Fútbol',      teamLabel: 'Equipos'   },
-    futbol_sala: { emoji: '🏟️', name: 'Fútbol Sala', teamLabel: 'Equipos'   },
-    baloncesto:  { emoji: '🏀', name: 'Baloncesto',  teamLabel: 'Equipos'   },
-    tenis:       { emoji: '🎾', name: 'Tenis',       teamLabel: 'Jugadores' },
-    frontenis:   { emoji: '🎱', name: 'Frontenis',   teamLabel: 'Jugadores' },
-    voleibol:    { emoji: '🏐', name: 'Voleibol',    teamLabel: 'Equipos'   },
-    padel:       { emoji: '🏓', name: 'Pádel',       teamLabel: 'Parejas'   },
-    rugby:       { emoji: '🏉', name: 'Rugby',       teamLabel: 'Equipos'   },
-};
-function getSportInfo(key) { return SPORTS[key] || SPORTS['futbol']; }
-
 // ── Auth state ─────────────────────────────────────────
 let token = localStorage.getItem('torneoapp_token');
 let sessionId = localStorage.getItem('torneoapp_session');
 let currentPage = 1;
-let selectedSport = 'futbol';
 
 const loginScreen  = document.getElementById('loginScreen');
 const appScreen    = document.getElementById('appScreen');
@@ -50,18 +36,6 @@ async function api(path, options = {}) {
     const res = await fetch(`${BASE_URL}${path}`, { ...options, headers });
     if (res.status === 401) { logout(true); return null; }
     return res;
-}
-
-// ── Sport selector ─────────────────────────────────────
-const sportGrid = document.getElementById('sportGrid');
-if (sportGrid) {
-    sportGrid.addEventListener('click', e => {
-        const option = e.target.closest('.sport-option');
-        if (!option) return;
-        sportGrid.querySelectorAll('.sport-option').forEach(o => o.classList.remove('selected'));
-        option.classList.add('selected');
-        selectedSport = option.dataset.sport;
-    });
 }
 
 // ── Session init ───────────────────────────────────────
@@ -167,7 +141,7 @@ btnCrear.addEventListener('click', async () => {
     try {
         const res = await api('/api/torneos', {
             method: 'POST',
-            body: JSON.stringify({ name, sport: selectedSport })
+            body: JSON.stringify({ name })
         });
         if (!res) return;
         if (!res.ok) { const d = await res.json(); alert(d.message || 'Error'); return; }
@@ -207,13 +181,14 @@ async function cargarTorneos(page = currentPage) {
         }
 
         torneosList.innerHTML = torneos.map((t, i) => {
-            const sport = getSportInfo(t.sport);
+            const teamCount = t.teams ? t.teams.length : 0;
+            const matchCount = t.matches ? t.matches.length : 0;
             return `
             <div class="torneo-card" data-id="${t._id}" style="animation-delay:${i * 0.05}s">
-                <div class="torneo-card-sport" title="${sport.name}">${sport.emoji}</div>
+                <div class="torneo-card-icon">🏆</div>
                 <div class="torneo-card-info">
                     <div class="torneo-card-name">${escapeHtml(t.name)}</div>
-                    <div class="torneo-card-meta">${sport.name} · ${t.teams.length} ${sport.teamLabel.toLowerCase()} · ${t.matches.length} partidos</div>
+                    <div class="torneo-card-meta">${teamCount} participantes · ${matchCount} partidos</div>
                 </div>
                 <div class="torneo-card-actions">
                     <button class="btn-danger btn-eliminar" data-id="${t._id}" data-name="${escapeHtml(t.name)}">Eliminar</button>
