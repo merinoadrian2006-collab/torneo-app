@@ -215,31 +215,14 @@ select option { background: var(--bg-elevated); }
 .btn-danger:active { transform: scale(0.95); }
 
 .btn-back {
-    display: inline-flex; align-items: center; gap: 8px;
-    padding: 9px 18px 9px 14px;
-    background: rgba(255,255,255,0.04);
-    color: var(--text-secondary);
-    font-family: 'Barlow', sans-serif; font-weight: 600; font-size: 13px;
-    letter-spacing: 0.3px;
+    display: inline-flex; align-items: center; gap: 7px;
+    padding: 9px 15px; background: transparent; color: var(--text-secondary);
+    font-family: 'Barlow', sans-serif; font-weight: 500; font-size: 13px;
     border: 1px solid var(--border); border-radius: var(--radius-sm);
     cursor: pointer; text-decoration: none;
     transition: all 0.22s cubic-bezier(0.34,1.56,0.64,1);
-    position: relative; overflow: hidden;
 }
-.btn-back::before {
-    content: '←';
-    display: inline-block;
-    font-size: 15px; line-height: 1;
-    transition: transform 0.22s cubic-bezier(0.34,1.56,0.64,1);
-}
-.btn-back:hover {
-    border-color: var(--border-accent);
-    color: var(--accent);
-    background: rgba(232,255,0,0.06);
-    transform: translateX(-3px);
-    box-shadow: 0 0 14px rgba(232,255,0,0.1), inset 0 1px 0 rgba(232,255,0,0.05);
-}
-.btn-back:hover::before { transform: translateX(-3px); }
+.btn-back:hover { border-color: var(--border-accent); color: var(--accent); transform: translateX(-3px); }
 
 .btn-logout {
     padding: 8px 18px; background: transparent; color: var(--text-muted);
@@ -354,94 +337,50 @@ select option { background: var(--bg-elevated); }
 .share-bar-inner {
     max-width: 100%;
     display: flex; align-items: center; justify-content: space-between;
-    gap: 14px; flex-wrap: wrap;
-    padding: 14px 40px;
-    background: linear-gradient(135deg, rgba(17,17,24,0.98) 0%, rgba(14,14,20,0.99) 100%);
-    border-bottom: 1px solid rgba(255,255,255,0.07);
-    border-top: 1px solid rgba(255,255,255,0.04);
-    position: relative; overflow: hidden;
+    gap: 16px; flex-wrap: wrap;
+    padding: 12px 40px;
+    background: var(--bg-card);
+    border-bottom: 1px solid var(--border);
 }
-.share-bar-inner::before {
-    content: '';
-    position: absolute; bottom: 0; left: 0; right: 0; height: 1px;
-    background: linear-gradient(90deg, transparent, rgba(232,255,0,0.15), rgba(0,212,255,0.1), transparent);
-}
-.share-info { display: flex; align-items: center; gap: 12px; }
-.share-label-group { display: flex; align-items: center; gap: 7px; }
-.share-icon { font-size: 14px; }
+.share-info { display: flex; align-items: center; gap: 10px; }
 .share-label {
-    font-size: 10px; font-weight: 700; letter-spacing: 2px;
+    font-size: 10px; font-weight: 600; letter-spacing: 2px;
     text-transform: uppercase; color: var(--text-muted);
 }
 .share-status {
     font-size: 11px; font-weight: 600; color: var(--text-muted);
     background: var(--bg-elevated); border: 1px solid var(--border);
     padding: 3px 10px; border-radius: 20px;
-    transition: all 0.3s ease;
 }
 .share-status.active {
     color: var(--green); border-color: rgba(74,222,128,0.28);
     background: rgba(74,222,128,0.07);
-    box-shadow: 0 0 8px rgba(74,222,128,0.1);
-    animation: statusPulse 3s ease infinite;
 }
-@keyframes statusPulse {
-    0%, 100% { box-shadow: 0 0 6px rgba(74,222,128,0.1); }
-    50%       { box-shadow: 0 0 14px rgba(74,222,128,0.2); }
-}
-.share-actions { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
-.share-url-wrap {
-    display: flex; align-items: center; gap: 0;
-    border: 1px solid var(--border); border-radius: var(--radius-xs);
-    overflow: hidden; transition: border-color 0.2s;
-}
-.share-url-wrap:not(.share-disabled):hover { border-color: rgba(255,255,255,0.15); }
-.share-url-wrap.share-disabled { opacity: 0.4; pointer-events: none; }
+.share-actions { display: flex; align-items: center; gap: 7px; flex-wrap: wrap; }
 .share-url {
-    font-size: 12px !important; padding: 8px 12px !important;
+    font-size: 12px !important; padding: 7px 11px !important;
     background: var(--bg-elevated) !important;
-    border: none !important; border-radius: 0 !important;
+    border: 1px solid var(--border) !important;
+    border-radius: var(--radius-xs) !important;
     color: var(--text-secondary) !important;
-    width: 220px !important; cursor: text;
-    font-family: 'Barlow', sans-serif !important;
+    width: 240px !important; cursor: text;
 }
-.share-url:focus { outline: none; }
 .btn-share-copy {
-    display: inline-flex; align-items: center; gap: 5px;
-    padding: 8px 12px; background: var(--bg-hover);
-    border: none; border-left: 1px solid var(--border);
-    color: var(--text-secondary); font-family: 'Barlow', sans-serif;
-    font-size: 12px; font-weight: 500; cursor: pointer;
-    transition: all 0.17s; white-space: nowrap;
-}
-.btn-share-copy:hover { background: rgba(232,255,0,0.08); color: var(--accent); }
-.btn-share-copy.copied { background: rgba(0,255,136,0.1); color: #00ff88; }
-.btn-share-copy-icon { font-size: 12px; }
-
-.btn-share-toggle {
-    display: inline-flex; align-items: center; gap: 6px;
-    padding: 8px 16px;
-    background: transparent;
+    padding: 7px 14px; background: var(--bg-elevated);
     border: 1px solid var(--border); border-radius: var(--radius-xs);
     color: var(--text-secondary); font-family: 'Barlow', sans-serif;
-    font-size: 12px; font-weight: 600; cursor: pointer;
-    transition: all 0.2s ease; white-space: nowrap;
+    font-size: 12px; cursor: pointer; transition: all 0.17s; white-space: nowrap;
 }
-.btn-share-toggle:not(.active):hover {
-    border-color: rgba(74,222,128,0.4); color: var(--green);
-    background: rgba(74,222,128,0.06);
-    box-shadow: 0 0 12px rgba(74,222,128,0.1);
+.btn-share-copy:hover { border-color: var(--border-accent); color: var(--accent); }
+.btn-share-toggle {
+    padding: 7px 14px; background: transparent;
+    border: 1px solid var(--border); border-radius: var(--radius-xs);
+    color: var(--text-secondary); font-family: 'Barlow', sans-serif;
+    font-size: 12px; cursor: pointer; transition: all 0.17s; white-space: nowrap;
 }
-.btn-share-toggle.active {
-    border-color: rgba(74,222,128,0.35); color: var(--green);
-    background: rgba(74,222,128,0.07);
-    box-shadow: 0 0 10px rgba(74,222,128,0.08);
-}
-.btn-share-toggle.active:hover {
-    background: var(--red-dim); border-color: rgba(255,68,68,0.35);
-    color: var(--red); box-shadow: 0 0 12px rgba(255,68,68,0.1);
-}
-.btn-share-toggle:disabled { opacity: 0.5; cursor: not-allowed; }
+.btn-share-toggle.active { border-color: rgba(74,222,128,0.3); color: var(--green); background: rgba(74,222,128,0.06); }
+.btn-share-toggle.active:hover { background: var(--red-dim); border-color: rgba(255,68,68,0.3); color: var(--red); }
+.btn-share-toggle:not(.active):hover { border-color: rgba(74,222,128,0.3); color: var(--green); }
 
 /* ── Torneos List ─────────────────────────────────────── */
 .torneo-card {
@@ -543,8 +482,9 @@ select option { background: var(--bg-elevated); }
 /* ── Tabla Clasificación ──────────────────────────────── */
 .tabla-wrapper {
     background: var(--bg-card); border: 1px solid var(--border);
-    border-radius: var(--radius); overflow: hidden; margin-top: 8px;
+    border-radius: var(--radius); overflow-x: auto; margin-top: 8px;
     animation: bounceUp 0.55s cubic-bezier(0.34,1.56,0.64,1) 0.1s both;
+    -webkit-overflow-scrolling: touch;
 }
 .tabla-title {
     font-family: 'Barlow Condensed', sans-serif; font-weight: 700;
@@ -552,25 +492,28 @@ select option { background: var(--bg-elevated); }
     color: var(--text-muted); padding: 13px 20px 11px;
     border-bottom: 1px solid var(--border);
 }
-table { width: 100%; border-collapse: collapse; }
+table { width: 100%; border-collapse: collapse; min-width: 340px; }
 table th {
-    padding: 9px 13px; text-align: center; font-size: 9px;
+    padding: 9px 8px; text-align: center; font-size: 9px;
     font-weight: 600; letter-spacing: 2px; text-transform: uppercase;
     color: var(--text-muted); background: transparent;
-    border-bottom: 1px solid var(--border);
+    border-bottom: 1px solid var(--border); white-space: nowrap;
 }
-table th:first-child { text-align: left; padding-left: 20px; }
+table th.col-name { text-align: left; padding-left: 14px; }
+table th.col-rank { padding-left: 14px; width: 40px; }
 table td {
-    padding: 12px 13px; text-align: center; font-size: 14px;
+    padding: 11px 8px; text-align: center; font-size: 13px;
     border-bottom: 1px solid var(--border-subtle); transition: background 0.13s;
 }
-table td:first-child { text-align: left; padding-left: 20px; font-weight: 600; }
+table td.col-name { text-align: left; padding-left: 14px; font-weight: 600; }
+table td.col-rank { padding-left: 14px; }
 table tr:last-child td { border-bottom: none; }
 table tbody tr { animation: rowSlide 0.4s cubic-bezier(0.34,1.56,0.64,1) both; }
 table tbody tr:nth-child(1) { animation-delay: 0.06s; }
 table tbody tr:nth-child(2) { animation-delay: 0.12s; }
 table tbody tr:nth-child(3) { animation-delay: 0.18s; }
 table tbody tr:nth-child(4) { animation-delay: 0.24s; }
+.team-name-cell { vertical-align: middle; }
 table tbody tr:nth-child(n+5) { animation-delay: 0.30s; }
 table tr:hover td { background: rgba(232,255,0,0.022); }
 .rank-num {
@@ -1133,144 +1076,190 @@ table tbody tr:first-child .pts-cell {
     .page-title .highlight { color: var(--accent); }
 }
 /* ═══════════════════════════════════════════════════════
-   EXTRA DECORACIÓN v3
+   MOBILE TABLE FIX + EXTRA DECORATION v4
    ═══════════════════════════════════════════════════════ */
 
-/* ── Animated scanning line on banner ────────────────── */
-@keyframes scanLine {
-    0%   { transform: translateY(-100%); opacity: 0; }
-    10%  { opacity: 0.5; }
-    90%  { opacity: 0.3; }
-    100% { transform: translateY(400%); opacity: 0; }
-}
-.torneo-banner::after {
-    content: '';
-    position: absolute; left: 0; right: 0; top: 0; height: 2px;
-    background: linear-gradient(90deg, transparent, rgba(232,255,0,0.4), rgba(0,212,255,0.3), transparent);
-    animation: scanLine 5s ease-in-out infinite;
-    pointer-events: none;
+/* Hide PF/PC columns on very small screens */
+@media (max-width: 480px) {
+    .col-hide-xs { display: none; }
+    table { min-width: 280px; font-size: 12px; }
+    table th { font-size: 8px; padding: 7px 5px; letter-spacing: 1px; }
+    table td { padding: 10px 5px; font-size: 12px; }
+    .table-avatar { width: 18px; height: 18px; font-size: 7px; margin-right: 5px; }
+    .rank-num { width: 22px; height: 22px; font-size: 9px; }
+    .team-name-cell { font-size: 12px; }
+    .pts-cell { font-size: 13px; }
 }
 
-/* ── Corner accent brackets on section-header ─────────── */
-.section-header {
-    position: relative;
+/* ── Marcador result emoji ────────────────────────────── */
+.marcador-result-emoji {
+    font-size: 16px; line-height: 1; margin-bottom: 3px;
+    animation: popIn 0.4s cubic-bezier(0.34,1.56,0.64,1) both;
 }
+
+/* ── Winner badge in playoff ──────────────────────────── */
+.winner-badge {
+    font-size: 10px; color: var(--accent);
+    font-weight: 800; margin-left: 4px;
+    animation: popIn 0.35s cubic-bezier(0.34,1.56,0.64,1) both;
+}
+
+/* ── Playoff empty icon ───────────────────────────────── */
+.playoff-empty-icon {
+    font-size: 48px; display: block; margin-bottom: 12px;
+    animation: floatIcon 4s ease-in-out infinite;
+}
+@keyframes floatIcon {
+    0%, 100% { transform: translateY(0) rotate(0deg); }
+    50%       { transform: translateY(-10px) rotate(5deg); }
+}
+
+/* ── Section headers with emojis — no brackets needed ─── */
+.section-header h2 { letter-spacing: 0; }
 .section-header h2::before,
-.section-header h2::after {
-    color: rgba(232,255,0,0.25);
-    font-size: 0.8em;
-    font-weight: 300;
-}
-.section-header h2::before { content: '[ '; }
-.section-header h2::after  { content: ' ]'; }
+.section-header h2::after { display: none; }
 
-/* ── Leader card glow ─────────────────────────────────── */
-.leader-card {
+/* ── Torneo banner name — shimmer animation ───────────── */
+@keyframes shimmerText {
+    0%   { background-position: -200% center; }
+    100% { background-position: 200% center; }
+}
+.torneo-banner-name {
+    background: linear-gradient(90deg, #fff 0%, #e8ff00 30%, #00d4ff 50%, #e8ff00 70%, #fff 100%);
+    background-size: 200% auto;
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    animation: shimmerText 4s linear infinite;
+}
+
+/* ── Section header — pulse dot before title ──────────── */
+.section-header h2::before {
+    content: '';
+    display: inline-block;
+    width: 6px; height: 6px;
+    border-radius: 50%;
+    background: var(--accent);
+    margin-right: 10px;
+    vertical-align: middle;
+    box-shadow: 0 0 8px var(--accent);
+    animation: rankPulse 2s ease infinite;
+}
+.section-header h2::after { display: none; }
+
+/* ── Equipo card — win streak bar ─────────────────────── */
+.equipo-card {
     position: relative; overflow: hidden;
 }
-.leader-card::before {
+.equipo-card::after {
     content: '';
-    position: absolute; top: 0; left: 0; right: 0; height: 1px;
-    background: linear-gradient(90deg, transparent, rgba(232,255,0,0.3), transparent);
+    position: absolute; left: 0; top: 0; bottom: 0; width: 3px;
+    background: linear-gradient(to bottom, transparent, var(--accent), transparent);
+    opacity: 0;
+    transition: opacity 0.3s;
 }
-.champion-card::before {
-    background: linear-gradient(90deg, transparent, rgba(232,255,0,0.6), rgba(255,200,0,0.4), transparent);
-}
-.champion-card {
-    box-shadow: 0 0 30px rgba(232,255,0,0.08), 0 0 0 1px rgba(232,255,0,0.12);
-    animation: championCardGlow 3s ease-in-out infinite alternate;
-}
-@keyframes championCardGlow {
-    from { box-shadow: 0 0 20px rgba(232,255,0,0.06), 0 0 0 1px rgba(232,255,0,0.1); }
-    to   { box-shadow: 0 0 40px rgba(232,255,0,0.14), 0 0 0 1px rgba(232,255,0,0.2); }
-}
+.equipo-card:hover::after { opacity: 0.6; }
 
-/* ── Torneo banner stat divider neon ──────────────────── */
-.banner-stat-divider {
-    background: linear-gradient(to bottom, transparent, rgba(232,255,0,0.3), rgba(0,212,255,0.2), transparent);
-}
-
-/* ── Table rows — subtle left border on hover ─────────── */
-table tbody tr {
-    transition: background 0.15s, transform 0.15s;
-    border-left: 2px solid transparent;
-}
-table tbody tr:hover {
-    background: rgba(255,255,255,0.025);
-    border-left-color: rgba(232,255,0,0.2);
-}
-
-/* ── Rank badges enhanced ─────────────────────────────── */
-.rank-2 { background: rgba(192,192,192,0.15); color: #c0c0c0; border-color: rgba(192,192,192,0.3); }
-.rank-3 { background: rgba(205,127,50,0.15);  color: #cd7f32; border-color: rgba(205,127,50,0.3); }
-
-/* ── Pts cell gradient ────────────────────────────────── */
+/* ── Pts cell — gradient text ─────────────────────────── */
 .pts-cell {
-    font-weight: 800;
-    background: linear-gradient(135deg, var(--accent), #b8ff00);
+    font-weight: 800; font-size: 15px;
+    background: linear-gradient(135deg, #e8ff00, #b8ff00);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;
 }
 
-/* ── Marcador cards — left strip ──────────────────────── */
-.marcador-card {
-    border-left: 3px solid transparent;
-    transition: border-color 0.2s, transform 0.2s;
+/* ── Rank badges ──────────────────────────────────────── */
+.rank-num {
+    display: inline-flex; align-items: center; justify-content: center;
+    width: 26px; height: 26px; border-radius: 7px;
+    font-family: 'Barlow Condensed', sans-serif; font-weight: 800;
+    font-size: 12px; border: 1px solid var(--border);
+    background: var(--bg-elevated); color: var(--text-muted);
 }
-.marcador-card:hover { border-left-color: rgba(232,255,0,0.25); transform: translateX(2px); }
+.rank-1 { background: rgba(232,255,0,0.12); color: #e8ff00; border-color: rgba(232,255,0,0.3); font-size: 16px; width:28px; height:28px; }
+.rank-2 { background: rgba(192,192,192,0.1); color: #c0c0c0; border-color: rgba(192,192,192,0.25); font-size: 16px; width:28px; height:28px; }
+.rank-3 { background: rgba(205,127,50,0.1);  color: #cd7f32; border-color: rgba(205,127,50,0.25); font-size: 16px; width:28px; height:28px; }
 
-/* ── Playoff match — side glow on winner ──────────────── */
-.playoff-team.winner {
+/* ── Table row hover ──────────────────────────────────── */
+table tbody tr { transition: background 0.15s; }
+table tbody tr:hover { background: rgba(255,255,255,0.02); }
+table tbody tr:first-child td { background: rgba(232,255,0,0.02); }
+
+/* ── Animated gradient border on partido form card ─────── */
+.partido-form-card {
     position: relative;
 }
-.playoff-team.winner::after {
-    content: '✓';
-    position: absolute; right: -2px; top: 50%;
-    transform: translateY(-50%);
-    font-size: 10px; color: var(--accent);
-    opacity: 0.7;
-}
-
-/* ── App header — floating pill when scrolled ─────────── */
-@media (min-width: 700px) {
-    .app-header {
-        transition: box-shadow 0.3s, background 0.3s;
-    }
-}
-
-/* ── Footer glow line ─────────────────────────────────── */
-.app-footer {
-    position: relative;
-}
-.app-footer::before {
+.partido-form-card::before {
     content: '';
-    position: absolute; top: 0; left: 10%; right: 10%; height: 1px;
-    background: linear-gradient(90deg, transparent, rgba(232,255,0,0.1), rgba(0,212,255,0.08), transparent);
+    position: absolute; inset: 0;
+    border-radius: var(--radius);
+    padding: 1px;
+    background: linear-gradient(135deg, rgba(232,255,0,0.15), rgba(0,212,255,0.1), rgba(180,80,255,0.1));
+    -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+    -webkit-mask-composite: xor; mask-composite: exclude;
+    pointer-events: none;
 }
 
-/* ── Share bar mobile responsive ─────────────────────── */
+/* ── Chart card top glow line ─────────────────────────── */
+.chart-card::after {
+    content: '';
+    position: absolute; bottom: 0; left: 0; right: 0; height: 1px;
+    background: linear-gradient(90deg, transparent, rgba(0,212,255,0.1), transparent);
+    pointer-events: none;
+}
+
+/* ── Campeon banner bigger glow ───────────────────────── */
+.campeon-banner {
+    font-size: 15px; font-weight: 800;
+    letter-spacing: 0.5px;
+}
+
+/* ── Leader card — animated gradient bg ───────────────── */
+.leader-card {
+    background: linear-gradient(135deg, rgba(18,18,26,0.9) 0%, rgba(14,14,20,0.95) 100%);
+}
+.champion-card {
+    background: linear-gradient(135deg, rgba(232,255,0,0.05) 0%, rgba(18,18,26,0.9) 50%, rgba(0,212,255,0.04) 100%);
+}
+
+/* ── Body background — extra depth ───────────────────── */
+body {
+    background-image:
+        radial-gradient(ellipse 70% 40% at 50% -10%, rgba(232,255,0,0.06) 0%, transparent 60%),
+        radial-gradient(ellipse 50% 35% at 85% 85%, rgba(80,60,200,0.04) 0%, transparent 50%),
+        radial-gradient(ellipse 40% 30% at 10% 60%, rgba(0,212,255,0.025) 0%, transparent 50%);
+}
+
+/* ── Btn primary — animated shimmer ───────────────────── */
+.btn-primary {
+    position: relative; overflow: hidden;
+}
+.btn-primary::after {
+    content: '';
+    position: absolute; top: 0; left: -100%; width: 60%; height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.15), transparent);
+    transform: skewX(-15deg);
+    transition: none;
+}
+.btn-primary:hover::after {
+    left: 150%;
+    transition: left 0.5s ease;
+}
+
+/* ── Mobile overrides ─────────────────────────────────── */
 @media (max-width: 700px) {
-    .share-bar-inner { padding: 12px 18px; flex-direction: column; align-items: flex-start; gap: 10px; }
-    .share-url { width: 100% !important; }
+    .torneo-banner-name { font-size: 28px; }
+    .stats-grid { grid-template-columns: 1fr; }
+    .stats-right-col { flex-direction: column; }
+    .pie-wrap { max-width: 160px; }
+    .playoff-bracket { flex-direction: column; gap: 12px; }
+    .playoff-col { min-width: 0; }
+    .marcador-card { gap: 6px; }
+    .marcador-name { font-size: 11px; max-width: 70px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .share-bar-inner { padding: 12px 16px; flex-direction: column; align-items: flex-start; gap: 10px; }
     .share-url-wrap { width: 100%; }
-    .share-url { width: auto !important; flex: 1; }
-    .share-actions { width: 100%; flex-direction: column; align-items: stretch; }
+    .share-url { width: auto !important; flex: 1; min-width: 0; }
+    .share-actions { width: 100%; flex-direction: column; gap: 6px; }
     .btn-share-toggle { text-align: center; justify-content: center; }
-    .btn-back { font-size: 12px; padding: 8px 12px 8px 10px; }
-}
-
-/* ── Equipo avatar pop on add ─────────────────────────── */
-@keyframes avatarPop {
-    0%   { transform: scale(0) rotate(-20deg); opacity: 0; }
-    70%  { transform: scale(1.15) rotate(5deg); }
-    100% { transform: scale(1) rotate(0); opacity: 1; }
-}
-.equipo-card:last-child .equipo-avatar {
-    animation: avatarPop 0.4s cubic-bezier(0.34,1.56,0.64,1) both;
-}
-
-/* ── Input focus glow ─────────────────────────────────── */
-input:focus, select:focus {
-    box-shadow: 0 0 0 2px rgba(232,255,0,0.12), 0 0 12px rgba(232,255,0,0.06);
 }
