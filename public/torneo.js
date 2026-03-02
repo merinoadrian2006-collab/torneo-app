@@ -201,37 +201,69 @@ async function cargarTorneo() {
 function mostrarShareBar() {
     if (!shareBar) return;
     const url = `${window.location.origin}/torneo.html?id=${torneoId}&public=1`;
+    const isActive = torneoData.publicShare;
+
     shareBar.innerHTML = `
         <div class="share-bar-inner">
             <div class="share-info">
-                <span class="share-label">Enlace público</span>
-                <span class="share-status ${torneoData.publicShare ? 'active' : ''}">${torneoData.publicShare ? '🟢 Activo' : '⚫ Desactivado'}</span>
+                <div class="share-label-group">
+                    <span class="share-icon">🔗</span>
+                    <span class="share-label">Enlace público</span>
+                </div>
+                <span class="share-status ${isActive ? 'active' : ''}">${isActive ? '🟢 Activo' : '⚫ Desactivado'}</span>
             </div>
             <div class="share-actions">
-                <input class="share-url" value="${escapeHtml(url)}" readonly id="shareUrlInput">
-                <button class="btn-share-copy" onclick="copiarEnlace()" id="btnCopy">Copiar enlace</button>
-                <button class="btn-share-toggle ${torneoData.publicShare ? 'active' : ''}" onclick="toggleShare()">${torneoData.publicShare ? 'Desactivar' : 'Activar'}</button>
+                <div class="share-url-wrap ${!isActive ? 'share-disabled' : ''}">
+                    <input class="share-url" value="${escapeHtml(url)}" readonly id="shareUrlInput" ${!isActive ? 'disabled' : ''}>
+                    <button class="btn-share-copy" id="btnCopy" ${!isActive ? 'disabled' : ''}>
+                        <span class="btn-share-copy-icon">📋</span> Copiar
+                    </button>
+                </div>
+                <button class="btn-share-toggle ${isActive ? 'active' : ''}" id="btnToggleShare">
+                    ${isActive ? '🔓 Desactivar acceso' : '🌐 Activar acceso público'}
+                </button>
             </div>
         </div>`;
-}
 
-async function toggleShare() {
-    const res = await api(`/api/torneos/${torneoId}/share`, { method: 'PUT' });
-    if (!res) return;
-    const data = await res.json();
-    torneoData.publicShare = data.publicShare;
-    mostrarShareBar();
-}
+    // Attach events with proper listeners (no inline onclick)
+    document.getElementById('btnCopy')?.addEventListener('click', () => {
+        const input = document.getElementById('shareUrlInput');
+        if (!input || !isActive) return;
+        navigator.clipboard.writeText(input.value).then(() => {
+            const btn = document.getElementById('btnCopy');
+            if (!btn) return;
+            btn.innerHTML = '<span class="btn-share-copy-icon">✓</span> Copiado';
+            btn.classList.add('copied');
+            setTimeout(() => {
+                btn.innerHTML = '<span class="btn-share-copy-icon">📋</span> Copiar';
+                btn.classList.remove('copied');
+            }, 2000);
+        }).catch(() => {
+            // fallback for older browsers
+            input.select();
+            document.execCommand('copy');
+        });
+    });
 
-function copiarEnlace() {
-    const input = document.getElementById('shareUrlInput');
-    if (!input) return;
-    navigator.clipboard.writeText(input.value).then(() => {
-        const btn = document.getElementById('btnCopy');
-        btn.textContent = '✓ Copiado';
-        btn.style.background = '#00ff88';
-        btn.style.color = '#0a0a0f';
-        setTimeout(() => { btn.textContent = 'Copiar enlace'; btn.style.background = ''; btn.style.color = ''; }, 1500);
+    document.getElementById('btnToggleShare')?.addEventListener('click', async () => {
+        const btn = document.getElementById('btnToggleShare');
+        if (btn) { btn.disabled = true; btn.textContent = '...'; }
+        try {
+            const res = await api(`/api/torneos/${torneoId}/share`, { method: 'PUT' });
+            if (!res) return;
+            if (!res.ok) {
+                const err = await res.json().catch(() => ({}));
+                alert(err.message || 'Error al cambiar visibilidad');
+                return;
+            }
+            const data = await res.json();
+            torneoData.publicShare = data.publicShare;
+            mostrarShareBar();
+        } catch {
+            alert('Error de conexión');
+        } finally {
+            if (btn) btn.disabled = false;
+        }
     });
 }
 
