@@ -28,7 +28,11 @@ const PlayoffMatchSchema = new mongoose.Schema({
 
 const ActivitySchema = new mongoose.Schema({
   text: String,
-  date: { type: Date, default: Date.now }
+  date: { type: Date, default: Date.now },
+  undoRef: {
+    type: { type: String },
+    id: { type: String }
+  }
 });
 
 const VALID_SPORTS = ['futbol', 'futbol_sala', 'baloncesto', 'tenis', 'frontenis', 'voleibol', 'padel', 'rugby'];
