@@ -5,18 +5,12 @@ const isPublic = params.get('public') === '1';
 
 // ── DOM refs ───────────────────────────────────────────
 const titulo           = document.getElementById('torneoTitulo');
-const statEquipos      = document.getElementById('statEquipos');
-const statPartidos     = document.getElementById('statPartidos');
-const statGoles        = document.getElementById('statGoles');
-const statEquiposLabel = document.getElementById('statEquiposLabel');
-const statGolesLabel   = document.getElementById('statGolesLabel');
-const sportBadge       = document.getElementById('sportBadge');
+const leaderCard       = document.getElementById('leaderCard');
 const equiposList      = document.getElementById('equiposList');
 const tablaClasif      = document.getElementById('tablaClasificacion');
 const estadisticasEl   = document.getElementById('estadisticasSection');
 const partidosEl       = document.getElementById('partidosSection');
 const playoffEl        = document.getElementById('playoffSection');
-const activityEl       = document.getElementById('activitySection');
 const btnEquipo        = document.getElementById('btnEquipo');
 const btnPartido       = document.getElementById('btnPartido');
 const shareBar         = document.getElementById('shareBar');
@@ -27,22 +21,20 @@ let torneoData = null;
 let chartBars  = null;
 let chartPie   = null;
 
-// ── Sport definitions ──────────────────────────────────
-const SPORTS = {
-    futbol:      { emoji: '⚽', name: 'Fútbol',      scoreLabel: 'Goles',   teamLabel: 'Equipos',   teamSingle: 'Equipo',   drawAllowed: true,  placeholder: 'Nombre del equipo...',    localLabel: 'Local',     visitLabel: 'Visitante', tableLabel: 'Clasificación', scoreColLabel: 'GF', scoreConcedLabel: 'GC', finLabel: 'FIN'  },
-    futbol_sala: { emoji: '🏟️', name: 'Fútbol Sala', scoreLabel: 'Goles',   teamLabel: 'Equipos',   teamSingle: 'Equipo',   drawAllowed: true,  placeholder: 'Nombre del equipo...',    localLabel: 'Local',     visitLabel: 'Visitante', tableLabel: 'Clasificación', scoreColLabel: 'GF', scoreConcedLabel: 'GC', finLabel: 'FIN'  },
-    baloncesto:  { emoji: '🏀', name: 'Baloncesto',  scoreLabel: 'Puntos',  teamLabel: 'Equipos',   teamSingle: 'Equipo',   drawAllowed: false, placeholder: 'Nombre del equipo...',    localLabel: 'Local',     visitLabel: 'Visitante', tableLabel: 'Clasificación', scoreColLabel: 'PF', scoreConcedLabel: 'PC', finLabel: 'FIN'  },
-    tenis:       { emoji: '🎾', name: 'Tenis',       scoreLabel: 'Sets',    teamLabel: 'Jugadores', teamSingle: 'Jugador',  drawAllowed: false, placeholder: 'Nombre del jugador...',   localLabel: 'Jugador 1', visitLabel: 'Jugador 2', tableLabel: 'Ranking',        scoreColLabel: 'SF', scoreConcedLabel: 'SC', finLabel: 'SETS' },
-    frontenis:   { emoji: '🎱', name: 'Frontenis',   scoreLabel: 'Sets',    teamLabel: 'Jugadores', teamSingle: 'Jugador',  drawAllowed: false, placeholder: 'Nombre del jugador...',   localLabel: 'Jugador 1', visitLabel: 'Jugador 2', tableLabel: 'Ranking',        scoreColLabel: 'SF', scoreConcedLabel: 'SC', finLabel: 'SETS' },
-    voleibol:    { emoji: '🏐', name: 'Voleibol',    scoreLabel: 'Sets',    teamLabel: 'Equipos',   teamSingle: 'Equipo',   drawAllowed: false, placeholder: 'Nombre del equipo...',    localLabel: 'Local',     visitLabel: 'Visitante', tableLabel: 'Clasificación', scoreColLabel: 'SF', scoreConcedLabel: 'SC', finLabel: 'SETS' },
-    padel:       { emoji: '🏓', name: 'Pádel',       scoreLabel: 'Sets',    teamLabel: 'Parejas',   teamSingle: 'Pareja',   drawAllowed: false, placeholder: 'Nombre de la pareja...', localLabel: 'Pareja 1',  visitLabel: 'Pareja 2',  tableLabel: 'Ranking',        scoreColLabel: 'SF', scoreConcedLabel: 'SC', finLabel: 'SETS' },
-    rugby:       { emoji: '🏉', name: 'Rugby',       scoreLabel: 'Puntos',  teamLabel: 'Equipos',   teamSingle: 'Equipo',   drawAllowed: true,  placeholder: 'Nombre del equipo...',    localLabel: 'Local',     visitLabel: 'Visitante', tableLabel: 'Clasificación', scoreColLabel: 'PF', scoreConcedLabel: 'PC', finLabel: 'FIN'  },
+// ── Generic config (sport-agnostic) ───────────────────
+const CONFIG = {
+    scoreLabel:      'Puntos',
+    teamLabel:       'Participantes',
+    teamSingle:      'Participante',
+    drawAllowed:     true,
+    placeholder:     'Nombre del participante...',
+    localLabel:      'Local',
+    visitLabel:      'Visitante',
+    tableLabel:      'Clasificación',
+    scoreColLabel:   'PF',
+    scoreConcedLabel:'PC',
+    finLabel:        'FIN',
 };
-
-function getSport() {
-    if (!torneoData || !torneoData.sport) return SPORTS['futbol'];
-    return SPORTS[torneoData.sport] || SPORTS['futbol'];
-}
 
 // ── Auth / API helper ──────────────────────────────────
 const token = localStorage.getItem('torneoapp_token');
@@ -68,7 +60,6 @@ function escapeHtml(str) {
         .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#039;');
 }
 
-// Strip validator.escape artifacts from server (show clean names in UI)
 function displayName(str) {
     return String(str || '')
         .replace(/&amp;/g, '&').replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&quot;/g, '"').replace(/&#039;/g, "'");
@@ -97,6 +88,58 @@ function getAvatarColor(name) {
     return colors[Math.abs(hash) % colors.length];
 }
 
+// ── LEADER CARD ────────────────────────────────────────
+function mostrarLeader() {
+    if (!leaderCard) return;
+    if (!torneoData.teams.length) {
+        leaderCard.innerHTML = '';
+        leaderCard.style.display = 'none';
+        return;
+    }
+    const sorted = [...torneoData.teams].sort((a, b) =>
+        b.points - a.points || (b.goalsFor - b.goalsAgainst) - (a.goalsFor - a.goalsAgainst)
+    );
+    const leader = sorted[0];
+    const color = getAvatarColor(leader.name);
+    const pj = leader.wins + leader.draws + leader.losses;
+    const hasFinalChampion = torneoData.playoff && torneoData.playoff.some(m => m.round === 'F' && m.played);
+    const finalMatch = hasFinalChampion ? torneoData.playoff.find(m => m.round === 'F') : null;
+    const champion = finalMatch ? (finalMatch.scoreA > finalMatch.scoreB ? finalMatch.teamA : finalMatch.teamB) : null;
+
+    if (champion) {
+        const champColor = getAvatarColor(champion);
+        leaderCard.innerHTML = `
+            <div class="leader-card champion-card">
+                <div class="leader-crown">🏆</div>
+                <div class="leader-avatar" style="background:${champColor}22;border-color:${champColor};color:${champColor}">${getInitials(champion)}</div>
+                <div class="leader-info">
+                    <span class="leader-label">Campeón del torneo</span>
+                    <span class="leader-name">${displayName(champion)}</span>
+                </div>
+            </div>`;
+    } else if (pj > 0) {
+        leaderCard.innerHTML = `
+            <div class="leader-card">
+                <div class="leader-crown">👑</div>
+                <div class="leader-avatar" style="background:${color}22;border-color:${color};color:${color}">${getInitials(leader.name)}</div>
+                <div class="leader-info">
+                    <span class="leader-label">Líder actual</span>
+                    <span class="leader-name">${displayName(leader.name)}</span>
+                </div>
+                <div class="leader-stats">
+                    <div class="leader-stat"><span class="leader-stat-num">${leader.points}</span><span class="leader-stat-lbl">pts</span></div>
+                    <div class="leader-stat"><span class="leader-stat-num">${leader.wins}</span><span class="leader-stat-lbl">vict</span></div>
+                    <div class="leader-stat"><span class="leader-stat-num">${pj}</span><span class="leader-stat-lbl">PJ</span></div>
+                </div>
+            </div>`;
+    } else {
+        leaderCard.innerHTML = '';
+        leaderCard.style.display = 'none';
+        return;
+    }
+    leaderCard.style.display = 'block';
+}
+
 // ── LOAD TORNEO ────────────────────────────────────────
 async function cargarTorneo() {
     try {
@@ -113,40 +156,24 @@ async function cargarTorneo() {
         }
         torneoData = await res.json();
 
-        const sport = getSport(); // NOW torneoData.sport is set correctly
-
         // Banner
         titulo.textContent = displayName(torneoData.name);
         document.title = `${displayName(torneoData.name)} — TorneoApp`;
 
-        if (sportBadge) {
-            sportBadge.textContent = `${sport.emoji} ${sport.name}`;
-            sportBadge.style.display = 'inline-flex';
-        }
-
-        // Stat labels
-        if (statEquiposLabel) statEquiposLabel.textContent = sport.teamLabel;
-        if (statGolesLabel)   statGolesLabel.textContent   = sport.scoreLabel;
-
-        const totalScore = torneoData.matches.reduce((s, m) => s + (m.scoreA || 0) + (m.scoreB || 0), 0);
-        animateCount(statEquipos, torneoData.teams.length);
-        animateCount(statPartidos, torneoData.matches.length);
-        animateCount(statGoles, totalScore);
-
         // Section labels
         const secLabel = document.getElementById('sectionEquiposLabel');
-        if (secLabel) secLabel.textContent = sport.teamLabel;
+        if (secLabel) secLabel.textContent = CONFIG.teamLabel;
 
         const equipoNameInput = document.getElementById('equipoName');
-        if (equipoNameInput) equipoNameInput.placeholder = sport.placeholder;
+        if (equipoNameInput) equipoNameInput.placeholder = CONFIG.placeholder;
 
         const labelLocal = document.getElementById('labelLocal');
         const labelVisit = document.getElementById('labelVisitante');
-        if (labelLocal) labelLocal.textContent = sport.localLabel;
-        if (labelVisit) labelVisit.textContent  = sport.visitLabel;
+        if (labelLocal) labelLocal.textContent = CONFIG.localLabel;
+        if (labelVisit) labelVisit.textContent  = CONFIG.visitLabel;
 
         const vsLabel = document.getElementById('vsScoreLabel');
-        if (vsLabel) vsLabel.textContent = sport.scoreLabel.slice(0,1) + '-' + sport.scoreLabel.slice(0,1);
+        if (vsLabel) vsLabel.textContent = 'M-M';
 
         if (isPublic) {
             if (editControls)  editControls.style.display  = 'none';
@@ -156,13 +183,13 @@ async function cargarTorneo() {
             mostrarShareBar();
         }
 
+        mostrarLeader();
         mostrarEquipos();
         if (!isPublic) actualizarSelects();
         mostrarTabla();
         mostrarEstadisticas();
         mostrarPlayoff();
         mostrarPartidos();
-        mostrarActividad();
 
     } catch (e) {
         console.error(e);
@@ -174,23 +201,18 @@ async function cargarTorneo() {
 function mostrarShareBar() {
     if (!shareBar) return;
     const url = `${window.location.origin}/torneo.html?id=${torneoId}&public=1`;
-    const isOn = torneoData.publicShare;
     shareBar.innerHTML = `
         <div class="share-bar-inner">
             <div class="share-info">
-                <span class="share-label">🔗 Enlace público</span>
-                <span class="share-status ${isOn ? 'active' : ''}">${isOn ? '🟢 Activo' : '⚫ Desactivado'}</span>
+                <span class="share-label">Enlace público</span>
+                <span class="share-status ${torneoData.publicShare ? 'active' : ''}">${torneoData.publicShare ? '🟢 Activo' : '⚫ Desactivado'}</span>
             </div>
             <div class="share-actions">
-                ${isOn ? `<input class="share-url" value="${url}" readonly id="shareUrlInput">
-                <button class="btn-share-copy" id="btnCopy">📋 Copiar</button>` : ''}
-                <button class="btn-share-toggle ${isOn ? 'active' : ''}" id="btnToggleShare">
-                    ${isOn ? '🔒 Desactivar' : '🌐 Activar enlace'}
-                </button>
+                <input class="share-url" value="${escapeHtml(url)}" readonly id="shareUrlInput">
+                <button class="btn-share-copy" onclick="copiarEnlace()" id="btnCopy">Copiar enlace</button>
+                <button class="btn-share-toggle ${torneoData.publicShare ? 'active' : ''}" onclick="toggleShare()">${torneoData.publicShare ? 'Desactivar' : 'Activar'}</button>
             </div>
         </div>`;
-    document.getElementById('btnToggleShare')?.addEventListener('click', toggleShare);
-    document.getElementById('btnCopy')?.addEventListener('click', copiarEnlace);
 }
 
 async function toggleShare() {
@@ -206,21 +228,18 @@ function copiarEnlace() {
     if (!input) return;
     navigator.clipboard.writeText(input.value).then(() => {
         const btn = document.getElementById('btnCopy');
-        if (!btn) return;
-        const orig = btn.textContent;
         btn.textContent = '✓ Copiado';
         btn.style.background = '#00ff88';
         btn.style.color = '#0a0a0f';
-        setTimeout(() => { btn.textContent = orig; btn.style.background = ''; btn.style.color = ''; }, 1500);
+        setTimeout(() => { btn.textContent = 'Copiar enlace'; btn.style.background = ''; btn.style.color = ''; }, 1500);
     });
 }
 
 // ── EQUIPOS ────────────────────────────────────────────
 function mostrarEquipos() {
-    const sport = getSport();
     if (!equiposList) return;
     if (!torneoData.teams.length) {
-        equiposList.innerHTML = `<div class="empty-state" style="padding:24px"><p>No hay ${sport.teamLabel.toLowerCase()} aún. ¡Añade el primero!</p></div>`;
+        equiposList.innerHTML = `<div class="empty-state" style="padding:24px"><p>No hay ${CONFIG.teamLabel.toLowerCase()} aún. ¡Añade el primero!</p></div>`;
         return;
     }
     equiposList.innerHTML = `<div class="equipos-grid">${torneoData.teams.map(t => {
@@ -240,8 +259,7 @@ function mostrarEquipos() {
 }
 
 async function eliminarEquipo(id) {
-    const sport = getSport();
-    if (!confirm(`¿Eliminar este ${sport.teamSingle.toLowerCase()}?`)) return;
+    if (!confirm(`¿Eliminar este ${CONFIG.teamSingle.toLowerCase()}?`)) return;
     const res = await api(`/api/torneos/${torneoId}/equipos/${id}`, { method: 'DELETE' });
     if (res && res.ok) cargarTorneo();
 }
@@ -281,13 +299,11 @@ function actualizarSelects() {
 }
 
 if (btnPartido) btnPartido.addEventListener('click', async () => {
-    const sport = getSport();
     const teamA = document.getElementById('teamA')?.value;
     const teamB = document.getElementById('teamB')?.value;
     const scoreA = parseInt(document.getElementById('scoreA')?.value) || 0;
     const scoreB = parseInt(document.getElementById('scoreB')?.value) || 0;
     if (!teamA || !teamB || teamA === teamB) return alert('Selecciona dos participantes distintos');
-    if (!sport.drawAllowed && scoreA === scoreB) return alert(`En ${sport.name} no puede haber empate`);
     if (!navigator.onLine) return alert('Sin conexión');
     btnPartido.disabled = true;
     const res = await api(`/api/torneos/${torneoId}/partidos`, {
@@ -313,30 +329,26 @@ if (btnPartido) btnPartido.addEventListener('click', async () => {
 // ── TABLA ──────────────────────────────────────────────
 function mostrarTabla() {
     if (!tablaClasif) return;
-    const sport = getSport();
     if (!torneoData.teams.length) { tablaClasif.innerHTML = ''; return; }
 
     const sorted = [...torneoData.teams].sort((a, b) =>
         b.points - a.points || (b.goalsFor - b.goalsAgainst) - (a.goalsFor - a.goalsAgainst)
     );
 
-    const drawColHead = sport.drawAllowed ? '<th title="Empates">E</th>' : '';
-    const drawCellFn  = t => sport.drawAllowed ? `<td>${t.draws}</td>` : '';
-
     tablaClasif.innerHTML = `
-        <div class="section-header" style="margin-top:48px"><h2>${sport.tableLabel}</h2></div>
+        <div class="section-header" style="margin-top:48px"><h2>${CONFIG.tableLabel}</h2></div>
         <div class="tabla-wrapper">
             <table>
                 <thead>
                     <tr>
                         <th>#</th>
-                        <th style="text-align:left">${sport.teamSingle}</th>
+                        <th style="text-align:left">${CONFIG.teamSingle}</th>
                         <th title="Partidos Jugados">PJ</th>
                         <th title="Ganados">G</th>
-                        ${drawColHead}
+                        <th title="Empates">E</th>
                         <th title="Perdidos">P</th>
-                        <th title="${sport.scoreLabel} a favor">${sport.scoreColLabel}</th>
-                        <th title="${sport.scoreLabel} en contra">${sport.scoreConcedLabel}</th>
+                        <th title="A favor">${CONFIG.scoreColLabel}</th>
+                        <th title="En contra">${CONFIG.scoreConcedLabel}</th>
                         <th title="Puntos">Pts</th>
                     </tr>
                 </thead>
@@ -353,7 +365,7 @@ function mostrarTabla() {
                             </td>
                             <td>${pj}</td>
                             <td>${t.wins}</td>
-                            ${drawCellFn(t)}
+                            <td>${t.draws}</td>
                             <td>${t.losses}</td>
                             <td>${t.goalsFor}</td>
                             <td>${t.goalsAgainst}</td>
@@ -368,43 +380,48 @@ function mostrarTabla() {
 // ── ESTADÍSTICAS ───────────────────────────────────────
 function mostrarEstadisticas() {
     if (!estadisticasEl) return;
-    const sport = getSport();
     if (!torneoData.teams.length) { estadisticasEl.innerHTML = ''; return; }
 
     const sorted = [...torneoData.teams].sort((a, b) => b.goalsFor - a.goalsFor).slice(0, 6);
 
+    const rachaHTML = sorted.map(t => {
+        const history = torneoData.matches
+            .filter(m => m.round === 'league' && (m.teamA === t.name || m.teamB === t.name))
+            .slice(-5).map(m => {
+                const isA = m.teamA === t.name;
+                const s = isA ? m.scoreA : m.scoreB;
+                const o = isA ? m.scoreB : m.scoreA;
+                if (s > o) return '<span class="racha-w">G</span>';
+                if (s < o) return '<span class="racha-l">P</span>';
+                return '<span class="racha-d">E</span>';
+            }).join('');
+        return `<div class="racha-item">
+            <span class="racha-nombre">${displayName(t.name)}</span>
+            <div class="racha-iconos">${history || '<span style="color:var(--text-muted);font-size:12px">—</span>'}</div>
+        </div>`;
+    }).join('');
+
+    const totalV = torneoData.teams.reduce((s, t) => s + t.wins,  0);
+    const totalE = torneoData.teams.reduce((s, t) => s + t.draws, 0);
+    const totalD = torneoData.teams.reduce((s, t) => s + t.losses, 0);
+
     estadisticasEl.innerHTML = `
         <div class="section-header" style="margin-top:48px"><h2>Estadísticas</h2></div>
         <div class="stats-grid">
-            <div class="chart-card chart-card--bars">
-                <div class="chart-title">${sport.scoreLabel} por ${sport.teamSingle}</div>
+            <div class="chart-card chart-card--tall">
+                <div class="chart-title">${CONFIG.scoreLabel} por ${CONFIG.teamSingle}</div>
                 <canvas id="chartBars" height="200"></canvas>
             </div>
-            <div class="stats-right-col">
-                <div class="chart-card chart-card--half">
+            <div class="chart-card stats-right-col">
+                <div class="chart-card--half">
                     <div class="chart-title">Distribución</div>
-                    <div class="pie-wrap"><canvas id="chartPie"></canvas></div>
-                </div>
-                <div class="chart-card chart-card--half">
-                    <div class="chart-title">Últimos 5 resultados</div>
-                    <div class="racha-list">
-                        ${sorted.map(t => {
-                            const history = torneoData.matches
-                                .filter(m => m.round === 'league' && (m.teamA === t.name || m.teamB === t.name))
-                                .slice(-5).map(m => {
-                                    const isA = m.teamA === t.name;
-                                    const s = isA ? m.scoreA : m.scoreB;
-                                    const o = isA ? m.scoreB : m.scoreA;
-                                    if (s > o) return '<span class="racha-w">G</span>';
-                                    if (s < o) return '<span class="racha-l">P</span>';
-                                    return '<span class="racha-d">E</span>';
-                                }).join('');
-                            return `<div class="racha-item">
-                                <span class="racha-nombre">${displayName(t.name)}</span>
-                                <div class="racha-iconos">${history || '<span style="color:var(--text-muted);font-size:12px">—</span>'}</div>
-                            </div>`;
-                        }).join('')}
+                    <div class="pie-wrap">
+                        <canvas id="chartPie"></canvas>
                     </div>
+                </div>
+                <div class="chart-card--half" style="border-top:1px solid var(--border); padding-top:16px; margin-top:0">
+                    <div class="chart-title">Últimos resultados</div>
+                    <div class="racha-list">${rachaHTML}</div>
                 </div>
             </div>
         </div>`;
@@ -412,83 +429,77 @@ function mostrarEstadisticas() {
     if (chartBars) { chartBars.destroy(); chartBars = null; }
     if (chartPie)  { chartPie.destroy();  chartPie  = null; }
 
-    const barsCtx = document.getElementById('chartBars').getContext('2d');
-    const barGradient = barsCtx.createLinearGradient(0, 0, 0, 200);
-    barGradient.addColorStop(0, 'rgba(232,255,0,0.9)');
-    barGradient.addColorStop(1, 'rgba(232,255,0,0.2)');
+    const barColors = sorted.map((_, i) => {
+        const palette = [
+            { bg: 'rgba(232,255,0,0.75)',   border: '#e8ff00' },
+            { bg: 'rgba(0,212,255,0.75)',    border: '#00d4ff' },
+            { bg: 'rgba(180,80,255,0.75)',   border: '#b450ff' },
+            { bg: 'rgba(255,80,140,0.75)',   border: '#ff508c' },
+            { bg: 'rgba(0,255,160,0.75)',    border: '#00ffa0' },
+            { bg: 'rgba(255,160,0,0.75)',    border: '#ffa000' },
+        ];
+        return palette[i % palette.length];
+    });
 
-    chartBars = new Chart(barsCtx, {
+    chartBars = new Chart(document.getElementById('chartBars').getContext('2d'), {
         type: 'bar',
         data: {
             labels: sorted.map(t => displayName(t.name)),
             datasets: [{
-                label: sport.scoreLabel,
+                label: CONFIG.scoreLabel,
                 data: sorted.map(t => t.goalsFor),
-                backgroundColor: barGradient,
-                borderColor: 'rgba(232,255,0,0.9)',
-                borderWidth: 1, borderRadius: 7,
+                backgroundColor: barColors.map(c => c.bg),
+                borderColor: barColors.map(c => c.border),
+                borderWidth: 1,
+                borderRadius: 7,
                 borderSkipped: false,
             }]
         },
         options: {
-            responsive: true, animation: { duration: 900, easing: 'easeOutQuart' },
+            responsive: true,
+            animation: { duration: 900, easing: 'easeOutQuart' },
             plugins: {
                 legend: { display: false },
                 tooltip: {
-                    backgroundColor: 'rgba(10,10,15,0.95)',
-                    borderColor: 'rgba(232,255,0,0.3)',
+                    backgroundColor: '#18181f',
+                    borderColor: 'rgba(255,255,255,0.1)',
                     borderWidth: 1,
                     titleColor: '#e8ff00',
-                    bodyColor: '#888899',
+                    bodyColor: '#f0f0f0',
                     padding: 10,
-                    cornerRadius: 8
                 }
             },
             scales: {
                 x: {
-                    ticks: { color: '#666680', font: { family: 'Barlow', size: 11 } },
-                    grid: { display: false },
-                    border: { color: 'rgba(255,255,255,0.05)' }
+                    ticks: { color: '#888899', font: { family: 'Barlow', size: 11 } },
+                    grid: { color: 'rgba(255,255,255,0.04)' }
                 },
                 y: {
-                    ticks: { color: '#666680', font: { family: 'Barlow', size: 11 } },
-                    grid: { color: 'rgba(255,255,255,0.04)', drawBorder: false },
-                    border: { display: false },
+                    ticks: { color: '#888899', font: { family: 'Barlow', size: 11 } },
+                    grid: { color: 'rgba(255,255,255,0.04)' },
                     beginAtZero: true
                 }
             }
         }
     });
 
-    const totalV = torneoData.teams.reduce((s, t) => s + t.wins,  0);
-    const totalE = torneoData.teams.reduce((s, t) => s + t.draws, 0);
-    const totalD = torneoData.teams.reduce((s, t) => s + t.losses, 0);
-    const pieLabels = sport.drawAllowed ? ['Victorias', 'Empates', 'Derrotas'] : ['Victorias', 'Derrotas'];
-    const pieData   = sport.drawAllowed ? [totalV, totalE, totalD]             : [totalV, totalD];
-    const pieColors = sport.drawAllowed
-        ? ['rgba(232,255,0,0.88)', 'rgba(136,153,255,0.75)', 'rgba(255,68,68,0.75)']
-        : ['rgba(232,255,0,0.88)', 'rgba(255,68,68,0.75)'];
-    const pieBorders = sport.drawAllowed
-        ? ['rgba(232,255,0,0.5)', 'rgba(136,153,255,0.5)', 'rgba(255,68,68,0.5)']
-        : ['rgba(232,255,0,0.5)', 'rgba(255,68,68,0.5)'];
-
     chartPie = new Chart(document.getElementById('chartPie').getContext('2d'), {
         type: 'doughnut',
         data: {
-            labels: pieLabels,
+            labels: ['Victorias', 'Empates', 'Derrotas'],
             datasets: [{
-                data: pieData,
-                backgroundColor: pieColors,
-                borderColor: pieBorders,
-                borderWidth: 2,
-                hoverOffset: 10,
-                hoverBorderWidth: 3
+                data: [totalV, totalE, totalD],
+                backgroundColor: ['#e8ff00', '#00d4ff', '#ff3366'],
+                borderColor: '#111118',
+                borderWidth: 3,
+                hoverOffset: 6,
+                hoverBorderColor: ['#b8cc00', '#009ab8', '#cc0044'],
             }]
         },
         options: {
             responsive: true,
             animation: { duration: 900, easing: 'easeOutQuart' },
-            cutout: '65%',
+            cutout: '68%',
             plugins: {
                 legend: {
                     position: 'bottom',
@@ -496,18 +507,19 @@ function mostrarEstadisticas() {
                         color: '#888899',
                         font: { family: 'Barlow', size: 11 },
                         padding: 12,
+                        boxWidth: 10,
+                        boxHeight: 10,
                         usePointStyle: true,
-                        pointStyleWidth: 8
+                        pointStyle: 'circle',
                     }
                 },
                 tooltip: {
-                    backgroundColor: 'rgba(10,10,15,0.95)',
-                    borderColor: 'rgba(232,255,0,0.3)',
+                    backgroundColor: '#18181f',
+                    borderColor: 'rgba(255,255,255,0.1)',
                     borderWidth: 1,
                     titleColor: '#e8ff00',
-                    bodyColor: '#888899',
+                    bodyColor: '#f0f0f0',
                     padding: 10,
-                    cornerRadius: 8
                 }
             }
         }
@@ -577,6 +589,9 @@ function mostrarPlayoff() {
         <div class="section-header" style="margin-top:48px"><h2>Playoff</h2></div>
         ${bracketHTML}
         ${!isPublic ? `<div style="margin-top:16px;text-align:center"><button class="btn-danger" onclick="resetPlayoff()">Reiniciar playoff</button></div>` : ''}`;
+
+    // Update leader card after playoff changes
+    mostrarLeader();
 }
 
 async function generarPlayoff() {
@@ -604,7 +619,6 @@ async function resetPlayoff() {
 // ── PARTIDOS ───────────────────────────────────────────
 function mostrarPartidos() {
     if (!partidosEl) return;
-    const sport = getSport();
     if (!torneoData.matches.length) { partidosEl.innerHTML = ''; return; }
 
     const items = [...torneoData.matches].reverse().map(m => {
@@ -624,7 +638,7 @@ function mostrarPartidos() {
                     <span class="score-sep">:</span>
                     <span class="${winB ? 'score-win' : ''}">${m.scoreB}</span>
                 </div>
-                <div class="marcador-label">${sport.finLabel}</div>
+                <div class="marcador-label">${CONFIG.finLabel}</div>
             </div>
             <div class="marcador-team right ${winB ? 'winner' : ''}">
                 <div class="marcador-avatar" style="background:${colorB}22;border-color:${colorB}55;color:${colorB}">${getInitials(m.teamB)}</div>
@@ -643,63 +657,6 @@ async function eliminarPartido(id) {
     if (!confirm('¿Eliminar este partido?')) return;
     const res = await api(`/api/torneos/${torneoId}/partidos/${id}`, { method: 'DELETE' });
     if (res && res.ok) cargarTorneo();
-}
-
-// ── ACTIVIDAD ──────────────────────────────────────────
-function mostrarActividad() {
-    if (!activityEl) return;
-    if (!torneoData.activity || !torneoData.activity.length) { activityEl.innerHTML = ''; return; }
-    const items = torneoData.activity.slice(0, 12).map(a => {
-        const d = new Date(a.date);
-        const hora = d.toLocaleTimeString('es', { hour: '2-digit', minute: '2-digit' });
-        const dia  = d.toLocaleDateString('es', { day: '2-digit', month: 'short' });
-        const canUndo = !isPublic && a.undoRef && (a.undoRef.type === 'match' || a.undoRef.type === 'team');
-        return `<div class="activity-item" id="act-${a._id}">
-            <div class="activity-left">
-                <span class="activity-dot ${a.undoRef ? 'dot-undoable' : ''}"></span>
-                <span class="activity-text">${escapeHtml(a.text)}</span>
-            </div>
-            <div class="activity-right">
-                <span class="activity-time">${dia} ${hora}</span>
-                ${canUndo ? `<button class="btn-undo" onclick="deshacerActividad('${a._id}')">↩ Deshacer</button>` : ''}
-            </div>
-        </div>`;
-    }).join('');
-    activityEl.innerHTML = `
-        <div class="section-header" style="margin-top:48px"><h2>Actividad Reciente</h2></div>
-        <div class="activity-list">${items}</div>`;
-}
-
-async function deshacerActividad(activityId) {
-    const el = document.getElementById(`act-${activityId}`);
-    if (el) { el.style.opacity = '0.4'; el.style.pointerEvents = 'none'; }
-    try {
-        const res = await api(`/api/torneos/${torneoId}/activity/${activityId}`, { method: 'DELETE' });
-        if (!res) return;
-        const data = await res.json();
-        if (data.undone) {
-            // Show a toast
-            mostrarToast('↩ Acción deshecha correctamente');
-        }
-        cargarTorneo();
-    } catch {
-        if (el) { el.style.opacity = ''; el.style.pointerEvents = ''; }
-        alert('Error al deshacer');
-    }
-}
-
-function mostrarToast(msg, tipo = 'success') {
-    let toast = document.getElementById('appToast');
-    if (!toast) {
-        toast = document.createElement('div');
-        toast.id = 'appToast';
-        document.body.appendChild(toast);
-    }
-    toast.textContent = msg;
-    toast.className = `app-toast ${tipo}`;
-    toast.style.display = 'block';
-    clearTimeout(toast._t);
-    toast._t = setTimeout(() => { toast.style.display = 'none'; }, 2800);
 }
 
 // ── INIT ───────────────────────────────────────────────
