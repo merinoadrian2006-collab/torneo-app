@@ -174,18 +174,23 @@ async function cargarTorneo() {
 function mostrarShareBar() {
     if (!shareBar) return;
     const url = `${window.location.origin}/torneo.html?id=${torneoId}&public=1`;
+    const isOn = torneoData.publicShare;
     shareBar.innerHTML = `
         <div class="share-bar-inner">
             <div class="share-info">
-                <span class="share-label">Enlace público</span>
-                <span class="share-status ${torneoData.publicShare ? 'active' : ''}">${torneoData.publicShare ? '🟢 Activo' : '⚫ Desactivado'}</span>
+                <span class="share-label">🔗 Enlace público</span>
+                <span class="share-status ${isOn ? 'active' : ''}">${isOn ? '🟢 Activo' : '⚫ Desactivado'}</span>
             </div>
             <div class="share-actions">
-                <input class="share-url" value="${escapeHtml(url)}" readonly id="shareUrlInput">
-                <button class="btn-share-copy" onclick="copiarEnlace()" id="btnCopy">Copiar enlace</button>
-                <button class="btn-share-toggle ${torneoData.publicShare ? 'active' : ''}" onclick="toggleShare()">${torneoData.publicShare ? 'Desactivar' : 'Activar'}</button>
+                ${isOn ? `<input class="share-url" value="${url}" readonly id="shareUrlInput">
+                <button class="btn-share-copy" id="btnCopy">📋 Copiar</button>` : ''}
+                <button class="btn-share-toggle ${isOn ? 'active' : ''}" id="btnToggleShare">
+                    ${isOn ? '🔒 Desactivar' : '🌐 Activar enlace'}
+                </button>
             </div>
         </div>`;
+    document.getElementById('btnToggleShare')?.addEventListener('click', toggleShare);
+    document.getElementById('btnCopy')?.addEventListener('click', copiarEnlace);
 }
 
 async function toggleShare() {
@@ -201,10 +206,12 @@ function copiarEnlace() {
     if (!input) return;
     navigator.clipboard.writeText(input.value).then(() => {
         const btn = document.getElementById('btnCopy');
+        if (!btn) return;
+        const orig = btn.textContent;
         btn.textContent = '✓ Copiado';
         btn.style.background = '#00ff88';
         btn.style.color = '#0a0a0f';
-        setTimeout(() => { btn.textContent = 'Copiar enlace'; btn.style.background = ''; btn.style.color = ''; }, 1500);
+        setTimeout(() => { btn.textContent = orig; btn.style.background = ''; btn.style.color = ''; }, 1500);
     });
 }
 
@@ -369,58 +376,86 @@ function mostrarEstadisticas() {
     estadisticasEl.innerHTML = `
         <div class="section-header" style="margin-top:48px"><h2>Estadísticas</h2></div>
         <div class="stats-grid">
-            <div class="chart-card">
+            <div class="chart-card chart-card--bars">
                 <div class="chart-title">${sport.scoreLabel} por ${sport.teamSingle}</div>
-                <canvas id="chartBars" height="180"></canvas>
+                <canvas id="chartBars" height="200"></canvas>
             </div>
-            <div class="chart-card">
-                <div class="chart-title">Últimos 5 resultados</div>
-                <div class="racha-list">
-                    ${sorted.map(t => {
-                        const history = torneoData.matches
-                            .filter(m => m.round === 'league' && (m.teamA === t.name || m.teamB === t.name))
-                            .slice(-5).map(m => {
-                                const isA = m.teamA === t.name;
-                                const s = isA ? m.scoreA : m.scoreB;
-                                const o = isA ? m.scoreB : m.scoreA;
-                                if (s > o) return '<span class="racha-w">G</span>';
-                                if (s < o) return '<span class="racha-l">P</span>';
-                                return '<span class="racha-d">E</span>';
-                            }).join('');
-                        return `<div class="racha-item">
-                            <span class="racha-nombre">${displayName(t.name)}</span>
-                            <div class="racha-iconos">${history || '<span style="color:var(--text-muted);font-size:12px">—</span>'}</div>
-                        </div>`;
-                    }).join('')}
+            <div class="stats-right-col">
+                <div class="chart-card chart-card--half">
+                    <div class="chart-title">Distribución</div>
+                    <div class="pie-wrap"><canvas id="chartPie"></canvas></div>
                 </div>
-            </div>
-            <div class="chart-card" style="grid-column:1/-1">
-                <div class="chart-title">Distribución de Resultados</div>
-                <canvas id="chartPie" height="100"></canvas>
+                <div class="chart-card chart-card--half">
+                    <div class="chart-title">Últimos 5 resultados</div>
+                    <div class="racha-list">
+                        ${sorted.map(t => {
+                            const history = torneoData.matches
+                                .filter(m => m.round === 'league' && (m.teamA === t.name || m.teamB === t.name))
+                                .slice(-5).map(m => {
+                                    const isA = m.teamA === t.name;
+                                    const s = isA ? m.scoreA : m.scoreB;
+                                    const o = isA ? m.scoreB : m.scoreA;
+                                    if (s > o) return '<span class="racha-w">G</span>';
+                                    if (s < o) return '<span class="racha-l">P</span>';
+                                    return '<span class="racha-d">E</span>';
+                                }).join('');
+                            return `<div class="racha-item">
+                                <span class="racha-nombre">${displayName(t.name)}</span>
+                                <div class="racha-iconos">${history || '<span style="color:var(--text-muted);font-size:12px">—</span>'}</div>
+                            </div>`;
+                        }).join('')}
+                    </div>
+                </div>
             </div>
         </div>`;
 
     if (chartBars) { chartBars.destroy(); chartBars = null; }
     if (chartPie)  { chartPie.destroy();  chartPie  = null; }
 
-    chartBars = new Chart(document.getElementById('chartBars').getContext('2d'), {
+    const barsCtx = document.getElementById('chartBars').getContext('2d');
+    const barGradient = barsCtx.createLinearGradient(0, 0, 0, 200);
+    barGradient.addColorStop(0, 'rgba(232,255,0,0.9)');
+    barGradient.addColorStop(1, 'rgba(232,255,0,0.2)');
+
+    chartBars = new Chart(barsCtx, {
         type: 'bar',
         data: {
             labels: sorted.map(t => displayName(t.name)),
             datasets: [{
                 label: sport.scoreLabel,
                 data: sorted.map(t => t.goalsFor),
-                backgroundColor: 'rgba(232,255,0,0.7)',
-                borderColor: 'rgba(232,255,0,1)',
-                borderWidth: 1, borderRadius: 5
+                backgroundColor: barGradient,
+                borderColor: 'rgba(232,255,0,0.9)',
+                borderWidth: 1, borderRadius: 7,
+                borderSkipped: false,
             }]
         },
         options: {
-            responsive: true, animation: { duration: 800 },
-            plugins: { legend: { display: false } },
+            responsive: true, animation: { duration: 900, easing: 'easeOutQuart' },
+            plugins: {
+                legend: { display: false },
+                tooltip: {
+                    backgroundColor: 'rgba(10,10,15,0.95)',
+                    borderColor: 'rgba(232,255,0,0.3)',
+                    borderWidth: 1,
+                    titleColor: '#e8ff00',
+                    bodyColor: '#888899',
+                    padding: 10,
+                    cornerRadius: 8
+                }
+            },
             scales: {
-                x: { ticks: { color: '#888899' }, grid: { color: 'rgba(255,255,255,0.05)' } },
-                y: { ticks: { color: '#888899' }, grid: { color: 'rgba(255,255,255,0.05)' }, beginAtZero: true }
+                x: {
+                    ticks: { color: '#666680', font: { family: 'Barlow', size: 11 } },
+                    grid: { display: false },
+                    border: { color: 'rgba(255,255,255,0.05)' }
+                },
+                y: {
+                    ticks: { color: '#666680', font: { family: 'Barlow', size: 11 } },
+                    grid: { color: 'rgba(255,255,255,0.04)', drawBorder: false },
+                    border: { display: false },
+                    beginAtZero: true
+                }
             }
         }
     });
@@ -431,15 +466,50 @@ function mostrarEstadisticas() {
     const pieLabels = sport.drawAllowed ? ['Victorias', 'Empates', 'Derrotas'] : ['Victorias', 'Derrotas'];
     const pieData   = sport.drawAllowed ? [totalV, totalE, totalD]             : [totalV, totalD];
     const pieColors = sport.drawAllowed
-        ? ['rgba(232,255,0,0.85)', 'rgba(100,120,255,0.7)', 'rgba(255,59,59,0.7)']
-        : ['rgba(232,255,0,0.85)', 'rgba(255,59,59,0.7)'];
+        ? ['rgba(232,255,0,0.88)', 'rgba(136,153,255,0.75)', 'rgba(255,68,68,0.75)']
+        : ['rgba(232,255,0,0.88)', 'rgba(255,68,68,0.75)'];
+    const pieBorders = sport.drawAllowed
+        ? ['rgba(232,255,0,0.5)', 'rgba(136,153,255,0.5)', 'rgba(255,68,68,0.5)']
+        : ['rgba(232,255,0,0.5)', 'rgba(255,68,68,0.5)'];
 
     chartPie = new Chart(document.getElementById('chartPie').getContext('2d'), {
         type: 'doughnut',
-        data: { labels: pieLabels, datasets: [{ data: pieData, backgroundColor: pieColors, borderColor: '#0a0a0f', borderWidth: 3, hoverOffset: 8 }] },
+        data: {
+            labels: pieLabels,
+            datasets: [{
+                data: pieData,
+                backgroundColor: pieColors,
+                borderColor: pieBorders,
+                borderWidth: 2,
+                hoverOffset: 10,
+                hoverBorderWidth: 3
+            }]
+        },
         options: {
-            responsive: true, animation: { duration: 800 }, cutout: '60%',
-            plugins: { legend: { position: 'bottom', labels: { color: '#888899', font: { family: 'Barlow', size: 12 }, padding: 16 } } }
+            responsive: true,
+            animation: { duration: 900, easing: 'easeOutQuart' },
+            cutout: '65%',
+            plugins: {
+                legend: {
+                    position: 'bottom',
+                    labels: {
+                        color: '#888899',
+                        font: { family: 'Barlow', size: 11 },
+                        padding: 12,
+                        usePointStyle: true,
+                        pointStyleWidth: 8
+                    }
+                },
+                tooltip: {
+                    backgroundColor: 'rgba(10,10,15,0.95)',
+                    borderColor: 'rgba(232,255,0,0.3)',
+                    borderWidth: 1,
+                    titleColor: '#e8ff00',
+                    bodyColor: '#888899',
+                    padding: 10,
+                    cornerRadius: 8
+                }
+            }
         }
     });
 }
@@ -579,18 +649,57 @@ async function eliminarPartido(id) {
 function mostrarActividad() {
     if (!activityEl) return;
     if (!torneoData.activity || !torneoData.activity.length) { activityEl.innerHTML = ''; return; }
-    const items = torneoData.activity.slice(0, 10).map(a => {
+    const items = torneoData.activity.slice(0, 12).map(a => {
         const d = new Date(a.date);
         const hora = d.toLocaleTimeString('es', { hour: '2-digit', minute: '2-digit' });
         const dia  = d.toLocaleDateString('es', { day: '2-digit', month: 'short' });
-        return `<div class="activity-item">
-            <span class="activity-text">${escapeHtml(a.text)}</span>
-            <span class="activity-time">${dia} ${hora}</span>
+        const canUndo = !isPublic && a.undoRef && (a.undoRef.type === 'match' || a.undoRef.type === 'team');
+        return `<div class="activity-item" id="act-${a._id}">
+            <div class="activity-left">
+                <span class="activity-dot ${a.undoRef ? 'dot-undoable' : ''}"></span>
+                <span class="activity-text">${escapeHtml(a.text)}</span>
+            </div>
+            <div class="activity-right">
+                <span class="activity-time">${dia} ${hora}</span>
+                ${canUndo ? `<button class="btn-undo" onclick="deshacerActividad('${a._id}')">↩ Deshacer</button>` : ''}
+            </div>
         </div>`;
     }).join('');
     activityEl.innerHTML = `
         <div class="section-header" style="margin-top:48px"><h2>Actividad Reciente</h2></div>
         <div class="activity-list">${items}</div>`;
+}
+
+async function deshacerActividad(activityId) {
+    const el = document.getElementById(`act-${activityId}`);
+    if (el) { el.style.opacity = '0.4'; el.style.pointerEvents = 'none'; }
+    try {
+        const res = await api(`/api/torneos/${torneoId}/activity/${activityId}`, { method: 'DELETE' });
+        if (!res) return;
+        const data = await res.json();
+        if (data.undone) {
+            // Show a toast
+            mostrarToast('↩ Acción deshecha correctamente');
+        }
+        cargarTorneo();
+    } catch {
+        if (el) { el.style.opacity = ''; el.style.pointerEvents = ''; }
+        alert('Error al deshacer');
+    }
+}
+
+function mostrarToast(msg, tipo = 'success') {
+    let toast = document.getElementById('appToast');
+    if (!toast) {
+        toast = document.createElement('div');
+        toast.id = 'appToast';
+        document.body.appendChild(toast);
+    }
+    toast.textContent = msg;
+    toast.className = `app-toast ${tipo}`;
+    toast.style.display = 'block';
+    clearTimeout(toast._t);
+    toast._t = setTimeout(() => { toast.style.display = 'none'; }, 2800);
 }
 
 // ── INIT ───────────────────────────────────────────────
