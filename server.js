@@ -101,8 +101,10 @@ function recalcularStats(torneo) {
     });
 }
 
-function addActivity(torneo, text) {
-    torneo.activity.unshift({ text, date: new Date() });
+function addActivity(torneo, text, undoRef = null) {
+    const entry = { text, date: new Date() };
+    if (undoRef) entry.undoRef = undoRef;
+    torneo.activity.unshift(entry);
     if (torneo.activity.length > 20) torneo.activity = torneo.activity.slice(0, 20);
 }
 
@@ -181,6 +183,40 @@ app.put('/api/torneos/:id/share', verifyToken, async (req, res) => {
     } catch (e) { res.status(500).json({ message: 'Error interno' }); }
 });
 
+// ── ACTIVITY UNDO ──────────────────────────────────────
+// Each activity item can carry an optional `undoRef` { type, id }
+// When the user clicks undo, we call this endpoint which reads the
+// undoRef and dispatches the right delete/rollback.
+app.delete('/api/torneos/:id/activity/:activityId', verifyToken, async (req, res) => {
+    try {
+        const torneo = await Torneo.findOne({ _id: req.params.id, sessionId: req.sessionId });
+        if (!torneo) return res.status(404).json({ message: 'No encontrado' });
+        const activity = torneo.activity.find(a => a._id.toString() === req.params.activityId);
+        if (!activity) return res.status(404).json({ message: 'Actividad no encontrada' });
+
+        const undo = activity.undoRef;
+        let undone = false;
+
+        if (undo) {
+            if (undo.type === 'match' && undo.id) {
+                torneo.matches = torneo.matches.filter(m => m._id.toString() !== undo.id);
+                recalcularStats(torneo);
+                undone = true;
+            } else if (undo.type === 'team' && undo.id) {
+                torneo.teams = torneo.teams.filter(t => t._id.toString() !== undo.id);
+                recalcularStats(torneo);
+                undone = true;
+            }
+        }
+
+        // Remove the activity entry regardless
+        torneo.activity = torneo.activity.filter(a => a._id.toString() !== req.params.activityId);
+        if (undone) addActivity(torneo, `↩ Acción deshecha`);
+        await torneo.save();
+        res.json({ message: undone ? 'Deshecho' : 'Eliminado', undone });
+    } catch (e) { console.error(e); res.status(500).json({ message: 'Error interno' }); }
+});
+
 app.delete('/api/torneos/:id', verifyToken, async (req, res) => {
     try {
         const result = await Torneo.findOneAndDelete({ _id: req.params.id, sessionId: req.sessionId });
@@ -199,7 +235,8 @@ app.put('/api/torneos/:id/equipos', verifyToken, async (req, res) => {
         if (torneo.teams.length >= 64) return res.status(400).json({ message: 'Máximo 64 participantes' });
         if (torneo.teams.some(t => t.name === name)) return res.status(400).json({ message: 'Ese nombre ya existe' });
         torneo.teams.push({ name, points: 0, wins: 0, draws: 0, losses: 0, goalsFor: 0, goalsAgainst: 0 });
-        addActivity(torneo, `"${name}" añadido`);
+        const newTeam = torneo.teams[torneo.teams.length - 1];
+        addActivity(torneo, `"${name}" añadido`, { type: 'team', id: newTeam._id.toString() });
         await torneo.save();
         res.json({ message: 'OK' });
     } catch (e) { res.status(500).json({ message: 'Error interno' }); }
@@ -232,13 +269,14 @@ app.put('/api/torneos/:id/partidos', verifyToken, async (req, res) => {
         const eq2 = torneo.teams.find(t => t.name === teamB);
         if (!eq1 || !eq2) return res.status(400).json({ message: 'Participante no encontrado' });
         torneo.matches.push({ teamA, teamB, scoreA, scoreB, round: 'league' });
+        const newMatch = torneo.matches[torneo.matches.length - 1];
         eq1.goalsFor += scoreA; eq1.goalsAgainst += scoreB;
         eq2.goalsFor += scoreB; eq2.goalsAgainst += scoreA;
         if (scoreA > scoreB) { eq1.points += 3; eq1.wins += 1; eq2.losses += 1; }
         else if (scoreA < scoreB) { eq2.points += 3; eq2.wins += 1; eq1.losses += 1; }
         else { eq1.points += 1; eq2.points += 1; eq1.draws += 1; eq2.draws += 1; }
         const result = scoreA === scoreB ? 'Empate' : `${scoreA > scoreB ? teamA : teamB} ganó`;
-        addActivity(torneo, `${teamA} ${scoreA}–${scoreB} ${teamB} · ${result}`);
+        addActivity(torneo, `${teamA} ${scoreA}–${scoreB} ${teamB} · ${result}`, { type: 'match', id: newMatch._id.toString() });
         await torneo.save();
         res.json({ message: 'OK' });
     } catch (e) { res.status(500).json({ message: 'Error interno' }); }
