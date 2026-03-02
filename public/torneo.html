@@ -3,9 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
-    <title>Torneo — TorneoApp</title>
+    <meta name="description" content="TorneoApp — Crea y gestiona torneos deportivos en segundos.">
+    <title>TorneoApp — Gestión de Torneos</title>
     <link rel="stylesheet" href="styles.css">
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
 </head>
 <body>
     <header class="app-header">
@@ -13,83 +13,62 @@
             <img src="logo.svg" class="logo-icon" alt="TorneoApp">
             <span class="logo-text">Torneo<span>App</span></span>
         </a>
-        <a class="btn-back" href="/">← Volver</a>
+        <span class="header-badge" id="userBadge"></span>
     </header>
 
-    <div class="torneo-banner" id="torneoBanner">
-        <div class="torneo-banner-content">
-            <div class="sport-badge" id="sportBadge" style="display:none"></div>
-            <div class="torneo-banner-label">Torneo</div>
-            <h1 class="torneo-banner-name" id="torneoTitulo">Cargando...</h1>
-            <div class="torneo-banner-stats">
-                <div class="banner-stat">
-                    <span class="banner-stat-value" id="statEquipos">0</span>
-                    <span class="banner-stat-label" id="statEquiposLabel">Equipos</span>
-                </div>
-                <div class="banner-stat-divider"></div>
-                <div class="banner-stat">
-                    <span class="banner-stat-value" id="statPartidos">0</span>
-                    <span class="banner-stat-label">Partidos</span>
-                </div>
-                <div class="banner-stat-divider"></div>
-                <div class="banner-stat">
-                    <span class="banner-stat-value" id="statGoles">0</span>
-                    <span class="banner-stat-label" id="statGolesLabel">Goles</span>
+    <div id="loginScreen" class="login-screen" style="display:none">
+        <div class="login-box">
+            <img src="logo.svg" class="login-icon-img" alt="TorneoApp">
+            <h1 class="login-title">Bienvenido a<span>TorneoApp</span></h1>
+            <p class="login-subtitle">Elige un nombre o código único para acceder a tus torneos. Úsalo siempre para entrar desde cualquier dispositivo.</p>
+            <div class="form-row">
+                <input type="text" id="loginInput" placeholder="Tu nombre o código..." maxlength="30" autocomplete="off" spellcheck="false">
+                <button class="btn-primary" id="btnLogin">Entrar</button>
+            </div>
+            <div id="loginError" class="login-error" style="display:none"></div>
+            <p class="login-hint">⚠️ Guarda bien tu código — cualquier persona que lo conozca podrá ver tus torneos.</p>
+            <div class="privacy-notice">
+                <strong>🔒 Privacidad</strong>
+                <div class="privacy-feature-list">
+                    <div class="privacy-feature"><span class="privacy-feature-icon">✓</span><span>Autenticación con JWT seguro — tu sesión nunca viaja en texto plano.</span></div>
+                    <div class="privacy-feature"><span class="privacy-feature-icon">✓</span><span>Cada torneo solo es accesible con tu código. El servidor verifica la propiedad en cada operación.</span></div>
+                    <div class="privacy-feature"><span class="privacy-feature-icon">✓</span><span>No almacenamos correos, contraseñas ni datos personales.</span></div>
+                    <div class="privacy-feature"><span class="privacy-feature-icon">✓</span><span>Los torneos son privados por defecto — tú decides si compartirlos.</span></div>
                 </div>
             </div>
         </div>
     </div>
 
-    <div id="shareBar"></div>
-
-    <div class="main-container">
-        <div id="editControls">
-            <div class="section-header"><h2 id="sectionEquiposLabel">Equipos</h2></div>
-            <div class="equipo-add-form">
-                <input type="text" id="equipoName" placeholder="Nombre del equipo..." maxlength="40">
-                <button class="btn-primary" id="btnEquipo">+ Añadir</button>
-            </div>
+    <div id="appScreen" style="display:none">
+        <div id="offlineBanner" class="offline-banner" style="display:none">
+            ⚠️ Sin conexión — los cambios no se guardarán hasta que vuelvas a conectarte.
         </div>
+        <div class="main-container">
+            <div class="page-title">Tus<span class="highlight">Torneos</span></div>
+            <p class="page-subtitle">Crea y gestiona torneos deportivos fácilmente.</p>
 
-        <div id="equiposList"></div>
-
-        <div id="editControls2">
-            <div class="section-header"><h2>Registrar Partido</h2></div>
-            <div class="partido-form-card">
-                <div class="partido-form-teams">
-                    <div class="partido-form-team">
-                        <label id="labelLocal">Local</label>
-                        <select id="teamA"></select>
-                    </div>
-                    <div class="partido-form-vs">
-                        <div class="vs-inputs">
-                            <input type="number" id="scoreA" class="score-input" min="0" value="0">
-                            <span class="vs-sep">—</span>
-                            <input type="number" id="scoreB" class="score-input" min="0" value="0">
-                        </div>
-                        <span class="vs-label" id="vsScoreLabel">VS</span>
-                    </div>
-                    <div class="partido-form-team right">
-                        <label id="labelVisitante">Visitante</label>
-                        <select id="teamB"></select>
-                    </div>
+            <div class="section-header"><h2>Nuevo Torneo</h2></div>
+            <div class="create-torneo-form">
+                <div class="form-row" style="margin-bottom:0">
+                    <input type="text" id="torneoName" placeholder="Nombre del torneo..." maxlength="60">
+                    <button class="btn-primary" id="btnCrear">Crear Torneo</button>
                 </div>
-                <button class="btn-primary btn-full" id="btnPartido">Guardar Resultado</button>
+            </div>
+
+            <div class="section-header"><h2>Mis Torneos</h2></div>
+            <div id="torneosList"></div>
+            <div id="paginacion" style="display:none; margin-top:20px; text-align:center; display:flex; justify-content:center; gap:8px;"></div>
+            <div style="margin-top:52px; text-align:center">
+                <button class="btn-logout" id="btnLogout">Cerrar sesión</button>
             </div>
         </div>
 
-        <div id="tablaClasificacion"></div>
-        <div id="playoffSection"></div>
-        <div id="estadisticasSection"></div>
-        <div id="partidosSection"></div>
-        <div id="activitySection"></div>
+        <footer class="app-footer">
+            <span class="footer-brand">Torneo<span>App</span></span>
+            <span class="footer-copy">© 2025 TorneoApp. Todos los derechos reservados.</span>
+        </footer>
     </div>
 
-    <footer class="app-footer">
-        <span class="footer-brand">Torneo<span>App</span></span>
-        <span class="footer-copy">© 2025 TorneoApp. Todos los derechos reservados.</span>
-    </footer>
-
-    <script src="torneo.js"></script>
+    <script src="script.js"></script>
 </body>
 </html>
